@@ -1,0 +1,52 @@
+{
+  "name": "seerxo-mcp",
+  "version": "1.2.53",
+  "description": "MCP server for AI-powered Etsy SEO generation. Use with Claude Desktop to generate optimized product titles, descriptions, and tags in seconds.",
+  "type": "module",
+  "main": "mcp-server.js",
+  "bin": {
+    "etsy-seo-mcp": "mcp-server.js",
+    "seerxo-mcp": "mcp-server.js",
+    "seerxo": "mcp-server.js"
+  },
+  "scripts": {
+    "start": "node mcp-server.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "claude-desktop",
+    "etsy",
+    "etsy-seo",
+    "seo",
+    "ai",
+    "claude",
+    "gemini",
+    "product-optimization",
+    "e-commerce",
+    "content-generation"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/semihbugrasezer/etsy-seo-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/semihbugrasezer/etsy-seo-mcp/issues"
+  },
+  "homepage": "https://www.seerxo.com",
+  "author": "Seerxo",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "boxen": "^7.1.1",
+    "chalk": "^5.3.0"
+  },
+  "files": [
+    "mcp-server.js",
+    "README.md",
+    "LICENSE"
+  ]
+}
