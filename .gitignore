@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+package-lock.json
+.pnpm-debug.log
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Build outputs
+dist/
+build/
+.vercel/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+.temp/
+README_old.md
+
+# Testing
+coverage/
+.nyc_output/
+.env.example
