@@ -145,6 +145,32 @@ const promptForEmail = async (
   }
 };
 
+// Strict validator for HTTP/HTTPS URLs and disallow dangerous chars
+function isSafeHttpUrl(url) {
+  try {
+    const u = new URL(url);
+    // Must be http or https
+    if (!(u.protocol === 'http:' || u.protocol === 'https:')) return false;
+    // No spaces, quotes, semicolons, or shell meta-chars allowed
+    if (/[;"'\\`\|<>&]/.test(url)) return false;
+    // Optionally: Only allow known hosts, e.g. seerxo.com
+    // if (!u.hostname.endsWith('seerxo.com')) return false;
+    // Prevent very long/suspicious URLs
+    if (url.length > 2048) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+// Sanitize function: only keep legal URL chars, strip whitespace/control chars
+function sanitizeUrl(url) {
+  // Remove any newline, tabs, carriage returns
+  let clean = url.replace(/[\r\n\t]/g, '');
+  // Optionally strip unsafe meta-characters
+  clean = clean.replace(/[;"'\\`\|<>&]/g, '');
+  return clean;
+}
+
 // ---------------------------------------------------------------------------
 // CLI helper output
 // ---------------------------------------------------------------------------
@@ -333,13 +359,17 @@ const runLoginCommand = async (extraArgs = [], options = {}) => {
       `${host}/auth/mcp/confirm?requestId=${data.requestId}&token=${encodeURIComponent(
         data.pollToken
       )}`;
-    const safeApprovalUrl = isSafeHttpUrl(approvalUrl) ? approvalUrl : null;
+    const safeApprovalUrl = isSafeHttpUrl(approvalUrl) ? sanitizeUrl(approvalUrl) : null;
 
     console.log('\nOpen this link in your browser to approve CLI login:\n');
     console.log(chalk.cyan(safeApprovalUrl || '(invalid approval URL)'));
     console.log('');
     if (safeApprovalUrl) {
       try {
+        // Extra defense: Only allow strict protocol and prevent command-injection meta-characters
+        if (!safeApprovalUrl) {
+          throw new Error('Approval URL failed validation.');
+        }
         const openCommand =
           process.platform === 'darwin'
             ? { cmd: 'open', args: [safeApprovalUrl] }
