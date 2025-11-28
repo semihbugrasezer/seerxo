@@ -79,6 +79,15 @@ function normalizeHost(value) {
   return value ? value.replace(/\/$/, '') : DEFAULT_HOST;
 }
 
+function isSafeHttpUrl(value) {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 function setRuntimeConfig({ email, apiKey, host }) {
   if (email) userEmail = email;
   if (apiKey) rawApiKey = apiKey;
@@ -324,25 +333,28 @@ const runLoginCommand = async (extraArgs = [], options = {}) => {
       `${host}/auth/mcp/confirm?requestId=${data.requestId}&token=${encodeURIComponent(
         data.pollToken
       )}`;
+    const safeApprovalUrl = isSafeHttpUrl(approvalUrl) ? approvalUrl : null;
 
     console.log('\nOpen this link in your browser to approve CLI login:\n');
-    console.log(chalk.cyan(approvalUrl));
+    console.log(chalk.cyan(safeApprovalUrl || '(invalid approval URL)'));
     console.log('');
-    try {
-      const openCommand =
-        process.platform === 'darwin'
-          ? { cmd: 'open', args: [approvalUrl] }
-          : process.platform === 'win32'
-          ? { cmd: 'cmd', args: ['/c', 'start', '', approvalUrl] }
-          : { cmd: 'xdg-open', args: [approvalUrl] };
+    if (safeApprovalUrl) {
+      try {
+        const openCommand =
+          process.platform === 'darwin'
+            ? { cmd: 'open', args: [safeApprovalUrl] }
+            : process.platform === 'win32'
+            ? { cmd: 'cmd', args: ['/c', 'start', '', safeApprovalUrl] }
+            : { cmd: 'xdg-open', args: [safeApprovalUrl] };
 
-      const opener = spawn(openCommand.cmd, openCommand.args, {
-        stdio: 'ignore',
-        detached: true,
-      });
-      opener.unref();
-    } catch {
-      // ignore open errors
+        const opener = spawn(openCommand.cmd, openCommand.args, {
+          stdio: 'ignore',
+          detached: true,
+        });
+        opener.unref();
+      } catch {
+        // ignore open errors
+      }
     }
 
     console.log('Waiting for approval...\n');
