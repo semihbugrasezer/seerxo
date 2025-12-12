@@ -1,12 +1,5 @@
 #!/usr/bin/env node
 
-/**
- * Seerxo MCP
- * - seerxo       : Human CLI (login/configure/generate/update/help + interactive)
- * - seerxo       : MCP stdio server (JSON-RPC, Claude/OpenAI)
- * - etsy-seo-mcp : legacy seerxo-mcp alias
- */
-
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import { promises as fsPromises } from 'node:fs';
@@ -30,9 +23,6 @@ const LOGIN_POLL_INTERVAL_MS = 4000;
 const LOGIN_TIMEOUT_MS = 15 * 60 * 1000;
 const isInteractiveSession = process.stdin.isTTY;
 
-// ---------------------------------------------------------------------------
-// Config load and runtime state
-// ---------------------------------------------------------------------------
 const loadLocalConfig = () => {
   try {
     const data = fs.readFileSync(CONFIG_PATH, 'utf8');
@@ -145,9 +135,6 @@ const promptForEmail = async (
   }
 };
 
-// ---------------------------------------------------------------------------
-// CLI helper output
-// ---------------------------------------------------------------------------
 const printUsage = () => {
   console.log(
     `seerxo ${clientVersion}\n\n` +
@@ -235,9 +222,6 @@ const runSelfUpdate = () => {
   }
 };
 
-// ---------------------------------------------------------------------------
-// Login / Configure / Generate
-// ---------------------------------------------------------------------------
 const runConfigureCommand = async (extraArgs = [], options = {}) => {
   const { showBanner = isInteractiveSession } = options;
 
@@ -353,7 +337,6 @@ const runLoginCommand = async (extraArgs = [], options = {}) => {
         });
         opener.unref();
       } catch {
-        // ignore open errors
       }
     }
 
@@ -406,9 +389,6 @@ const runLoginCommand = async (extraArgs = [], options = {}) => {
   }
 };
 
-// ---------------------------------------------------------------------------
-// Signing + API call
-// ---------------------------------------------------------------------------
 function generateSignature(payload) {
   const timestamp = Date.now().toString();
   const message = JSON.stringify(payload) + timestamp;
@@ -471,9 +451,6 @@ async function generateEtsySEO(productName, category = '') {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Codex benzeri interaktif CLI shell
-// ---------------------------------------------------------------------------
 async function startInteractiveShell() {
   console.clear();
   printCliBanner();
@@ -670,9 +647,6 @@ async function startInteractiveShell() {
   await promptLoop();
 }
 
-// ---------------------------------------------------------------------------
-// CLI subcommands
-// ---------------------------------------------------------------------------
 async function handleCli(subArgs) {
   const sub = subArgs[0];
 
@@ -767,9 +741,6 @@ async function handleCli(subArgs) {
   process.exit(1);
 }
 
-// ---------------------------------------------------------------------------
-// MCP stdio server
-// ---------------------------------------------------------------------------
 function startMcpServer() {
   if (!userEmail || !hasValidApiKey) {
     console.error(
@@ -917,15 +888,10 @@ function startMcpServer() {
     process.exit(1);
   });
 
-  // MCP mode: small stderr log
   console.error('Seerxo MCP Server started');
 }
 
-// ---------------------------------------------------------------------------
-// main
-// ---------------------------------------------------------------------------
 async function main() {
-  // seerxo → interactive (no args) or CLI
   if (invokedAsSeerxo) {
     if (args.length === 0) {
       await startInteractiveShell();
@@ -935,7 +901,6 @@ async function main() {
     return;
   }
 
-  // seerxo / seerxo-mcp / etsy-seo-mcp
   if (invokedAsMcp) {
     const cliSubcommands = [
       'login',
@@ -953,12 +918,10 @@ async function main() {
       return;
     }
 
-    // No args → MCP stdio server
     startMcpServer();
     return;
   }
 
-  // fallback: behave like CLI
   await handleCli(args);
 }
 
