@@ -18,10 +18,12 @@ const pkg = require('./package.json');
 const CONFIG_DIR = path.join(os.homedir(), '.seerxo-mcp');
 const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
 const DEFAULT_HOST = 'https://api.seerxo.com';
+const DEFAULT_UPGRADE_URL = 'https://seerxo.com/pricing?checkout=premium';
 const clientVersion = process.env.SEERXO_CLIENT_VERSION || pkg.version;
 const LOGIN_POLL_INTERVAL_MS = 4000;
 const LOGIN_TIMEOUT_MS = 15 * 60 * 1000;
 const isInteractiveSession = process.stdin.isTTY;
+const upgradeUrl = process.env.SEERXO_UPGRADE_URL || DEFAULT_UPGRADE_URL;
 
 const loadLocalConfig = () => {
   try {
@@ -399,6 +401,26 @@ function generateSignature(payload) {
   return { signature, timestamp };
 }
 
+function openUpgradeLink(url = upgradeUrl) {
+  if (!url) return;
+  console.log(chalk.yellow(`
+Usage limit reached. Opening upgrade page: ${url}
+`));
+  try {
+    const openCommand =
+      process.platform === 'darwin'
+        ? { cmd: 'open', args: [url] }
+        : process.platform === 'win32'
+        ? { cmd: 'cmd', args: ['/c', 'start', '', url] }
+        : { cmd: 'xdg-open', args: [url] };
+    const opener = spawn(openCommand.cmd, openCommand.args, {
+      stdio: 'ignore',
+      detached: true,
+    });
+    opener.unref();
+  } catch {}
+}
+
 async function generateEtsySEO(productName, category = '') {
   if (!userEmail) {
     throw new Error('Email is not set. Run "seerxo configure" first.');
@@ -450,7 +472,6 @@ async function generateEtsySEO(productName, category = '') {
       const error = new Error(message);
       error.payload = {
         message,
-        paymentLink: data?.upgrade?.paymentLink || data?.paymentLink || null,
       };
       throw error;
     }
