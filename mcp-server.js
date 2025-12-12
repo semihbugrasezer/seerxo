@@ -18,12 +18,17 @@ const pkg = require('./package.json');
 const CONFIG_DIR = path.join(os.homedir(), '.seerxo-mcp');
 const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
 const DEFAULT_HOST = 'https://api.seerxo.com';
-const DEFAULT_UPGRADE_URL = 'https://seerxo.com/pricing?checkout=premium';
 const clientVersion = process.env.SEERXO_CLIENT_VERSION || pkg.version;
 const LOGIN_POLL_INTERVAL_MS = 4000;
 const LOGIN_TIMEOUT_MS = 15 * 60 * 1000;
 const isInteractiveSession = process.stdin.isTTY;
-const upgradeUrl = process.env.SEERXO_UPGRADE_URL || DEFAULT_UPGRADE_URL;
+const resolveDefaultUpgradeUrl = (host) =>
+  `${host.replace(/\/$/, '')}/app/billing/redirect/premium`;
+let upgradeUrl =
+  process.env.SEERXO_UPGRADE_URL ||
+  resolveDefaultUpgradeUrl(
+    process.env.SEERXO_HOST || process.env.API_BASE || DEFAULT_HOST
+  );
 
 const loadLocalConfig = () => {
   try {
@@ -259,11 +264,11 @@ const runConfigureCommand = async (extraArgs = [], options = {}) => {
     process.exit(1);
   }
 
-  await fsPromises.mkdir(CONFIG_DIR, { recursive: true });
+  await fsPromises.mkdir(CONFIG_DIR, { recursive: true, mode: 0o700 });
   await fsPromises.writeFile(
     CONFIG_PATH,
     JSON.stringify({ email, apiKey, host }, null, 2),
-    'utf8'
+    { encoding: 'utf8', mode: 0o600 }
   );
 
   setRuntimeConfig({ email, apiKey, host });
@@ -349,7 +354,7 @@ const runLoginCommand = async (extraArgs = [], options = {}) => {
 
       if (poll.status === 'approved' && poll.apiKey) {
         const resolvedHost = poll.host ? normalizeHost(poll.host) : host;
-        await fsPromises.mkdir(CONFIG_DIR, { recursive: true });
+        await fsPromises.mkdir(CONFIG_DIR, { recursive: true, mode: 0o700 });
         await fsPromises.writeFile(
           CONFIG_PATH,
           JSON.stringify(
@@ -361,7 +366,7 @@ const runLoginCommand = async (extraArgs = [], options = {}) => {
             null,
             2
           ),
-          'utf8'
+          { encoding: 'utf8', mode: 0o600 }
         );
 
         setRuntimeConfig({
