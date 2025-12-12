@@ -429,17 +429,30 @@ async function generateEtsySEO(productName, category = '') {
       body: JSON.stringify(payload),
     });
 
+    const data = await response.json().catch(() => ({}));
+
     if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(
-        error.error || error.message || `API error: ${response.status}`
-      );
+      const message =
+        data?.error || data?.message || `API error: ${response.status}`;
+      const payload = {
+        message,
+        status: response.status,
+        paymentLink: data?.upgrade?.paymentLink || data?.paymentLink || null,
+      };
+      const error = new Error(message);
+      error.payload = payload;
+      error.status = response.status;
+      throw error;
     }
 
-    const data = await response.json();
-
     if (!data.success) {
-      throw new Error(data.error || 'Content generation failed');
+      const message = data.error || 'Content generation failed';
+      const error = new Error(message);
+      error.payload = {
+        message,
+        paymentLink: data?.upgrade?.paymentLink || data?.paymentLink || null,
+      };
+      throw error;
     }
 
     return {
@@ -447,7 +460,9 @@ async function generateEtsySEO(productName, category = '') {
       usage: data.usage,
     };
   } catch (error) {
-    throw new Error(error.message || 'Failed to generate Etsy SEO content');
+    throw new Error(error.message || 'Failed to generate Etsy SEO content', {
+      cause: error,
+    });
   }
 }
 
@@ -550,17 +565,16 @@ async function startInteractiveShell() {
           console.log('Product is required.');
           continue;
         }
-        try {
-          const result = await generateEtsySEO(productName, category);
-          const usageInfo = result.usage
-            ? `(${result.usage.current}/${result.usage.limit} used, ${result.usage.remaining} remaining)`
-            : '';
-
-          console.log(
-            boxen(
-              [
-                chalk.bold(`✅ Etsy SEO for "${productName}"`),
-                '',
+      try {
+        const result = await generateEtsySEO(productName, category);
+        const usageInfo = result.usage
+          ? `(${result.usage.current}/${result.usage.limit} used, ${result.usage.remaining} remaining)`
+          : '';
+        console.log(
+          boxen(
+            [
+              chalk.bold(`✅ Etsy SEO for "${productName}"`),
+              '',
                 chalk.bold('Title:'),
                 result.title,
                 '',
@@ -635,11 +649,12 @@ async function startInteractiveShell() {
           )
         );
       } catch (error) {
-        console.error(
-          chalk.red(
-            error.message || 'Failed to generate Etsy SEO content from prompt'
-          )
-        );
+        const message =
+          error?.payload?.message ||
+          error?.message ||
+          'Failed to generate Etsy SEO content from prompt';
+
+        console.error(chalk.red(message));
       }
     }
   }
