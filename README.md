@@ -117,7 +117,7 @@ Tags: boho wall art, line art prints, minimalist decor, ...
 }
 ```
 
-**Note:** `SEERXO_EMAIL` and `SEERXO_API_KEY` are written to `~/.seerxo-mcp/config.json` after CLI login; you can copy from there if you prefer.
+**Note:** `SEERXO_EMAIL` and `SEERXO_API_KEY` are written to `~/.seerxo-mcp/config.json` after CLI login; you can copy from there if you prefer. This file is plaintext—keep it on single-user machines only and restrict permissions (`chmod 700 ~/.seerxo-mcp && chmod 600 ~/.seerxo-mcp/config.json`). Future versions will move this to a secure keychain.
 
 3) Restart Claude Desktop
 
