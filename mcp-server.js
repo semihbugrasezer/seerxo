@@ -61,6 +61,18 @@ function resolveApiKeyState(rawValue) {
   };
 }
 
+function looksLikeKeyIdOnly(rawValue) {
+  const value = typeof rawValue === 'string' ? rawValue.trim() : '';
+  return Boolean(value) && !value.includes('.') && /^[a-zA-Z0-9_-]{8,64}$/.test(value);
+}
+
+function normalizeCommandName(command) {
+  const value = typeof command === 'string' ? command.trim().toLowerCase() : '';
+  if (value === 'signin' || value === 'sign-in') return 'login';
+  if (value === 'signout' || value === 'sign-out') return 'logout';
+  return value;
+}
+
 function syncApiKeyState() {
   const state = resolveApiKeyState(rawApiKey);
   apiKeyParts = state.parts;
@@ -82,6 +94,14 @@ function printStatus() {
       `  Host  : ${apiHost || chalk.red('missing')}\n` +
       `  Key   : ${keyState}\n`
   );
+}
+
+function clearCliScreen() {
+  if (!process.stdout.isTTY) {
+    return;
+  }
+
+  process.stdout.write('\u001bc');
 }
 
 const getQuotaEndpoint = () => `${apiHost}/mcp/quota`;
@@ -294,6 +314,7 @@ const printUsage = () => {
     `seerxo ${clientVersion}\n\n` +
       `Commands:\n` +
       `  seerxo login [--email you@example.com --host https://api.seerxo.com]\n` +
+      `  seerxo logout\n` +
       `  seerxo configure [--email you@example.com --api-key keyId.secret --host https://api.seerxo.com]\n` +
       `  seerxo quota        # show remaining credits\n` +
       `  seerxo generate --product \"...\" [--category \"...\"] [--json]\n` +
@@ -332,6 +353,7 @@ const printCliBanner = () => {
     `${chalk.cyan('status')}     ${chalk.gray('Show config & key state')}`,
     `${chalk.cyan('quota')}      ${chalk.gray('Show remaining credits')}`,
     `${chalk.cyan('login')}      ${chalk.gray('Open approval link to sign in')}`,
+    `${chalk.cyan('logout')}     ${chalk.gray('Clear saved local credentials')}`,
     `${chalk.cyan('configure')}  ${chalk.gray('Set email & API key')}`,
     `${chalk.cyan('generate')}   ${chalk.gray('Guided prompt (product/category)')}`,
     `${chalk.cyan('quit')}       ${chalk.gray('Exit interactive mode')}`,
@@ -410,6 +432,12 @@ const runConfigureCommand = async (extraArgs = [], options = {}) => {
   }
 
   if (!resolveApiKeyState(apiKey).isValid) {
+    if (looksLikeKeyIdOnly(apiKey)) {
+      console.error(
+        'That value looks like a key ID only, not the full API key. Use the full "keyId.secret" value or run "seerxo login".'
+      );
+      process.exit(1);
+    }
     console.error(
       `API key must be in the format "keyId.secret" and the secret part must be at least ${MIN_API_KEY_SECRET_LENGTH} characters.`
     );
@@ -430,6 +458,36 @@ const runConfigureCommand = async (extraArgs = [], options = {}) => {
   console.log('{');
   console.log('  "command": "seerxo"');
   console.log('}');
+};
+
+const runLogoutCommand = async () => {
+  let host = apiHost || DEFAULT_HOST;
+
+  try {
+    const existing = await loadLocalConfigAsync();
+    host = normalizeHost(existing.host || host);
+  } catch {}
+
+  await fsPromises.mkdir(CONFIG_DIR, { recursive: true, mode: 0o700 });
+  await fsPromises.writeFile(
+    CONFIG_PATH,
+    JSON.stringify({ host }, null, 2),
+    { encoding: 'utf8', mode: 0o600 }
+  );
+
+  setRuntimeConfig({
+    email: null,
+    apiKey: null,
+    host,
+  });
+
+  console.log(`Signed out. Local credentials cleared from ${CONFIG_PATH}.`);
+
+  if (process.env.SEERXO_EMAIL || process.env.SEERXO_API_KEY) {
+    console.log(
+      'Environment variables are still set. Clear SEERXO_EMAIL / SEERXO_API_KEY if you want a fully clean session.'
+    );
+  }
 };
 
 const runLoginCommand = async (extraArgs = [], options = {}) => {
@@ -633,7 +691,7 @@ async function generateEtsySEO(productName, category = '') {
 }
 
 async function startInteractiveShell() {
-  console.clear();
+  clearCliScreen();
   printCliBanner();
 
   if (!userEmail || !hasValidApiKey) {
@@ -688,6 +746,12 @@ async function startInteractiveShell() {
         return promptLoop();
       }
 
+      if (cmd === 'logout' || cmd === 'signout' || cmd === 'sign-out') {
+        rl.close();
+        await runLogoutCommand();
+        return promptLoop();
+      }
+
       if (cmd === 'configure') {
         rl.close();
         await runConfigureCommand([], { showBanner: false });
@@ -706,6 +770,7 @@ async function startInteractiveShell() {
             `  ${chalk.cyan('status')}     ${chalk.gray('Show config & key state')}\n` +
             `  ${chalk.cyan('quota')}      ${chalk.gray('Show remaining credits')}\n` +
             `  ${chalk.cyan('login')}      ${chalk.gray('Open approval link to sign in')}\n` +
+            `  ${chalk.cyan('logout')}     ${chalk.gray('Clear saved local credentials')}\n` +
             `  ${chalk.cyan('configure')}  ${chalk.gray('Manual email + API key setup')}\n` +
             `  ${chalk.cyan('generate')}   ${chalk.gray(
               'Guided prompt for product + category'
@@ -716,7 +781,7 @@ async function startInteractiveShell() {
       }
 
       if (cmd === 'clear' || cmd === 'cls') {
-        console.clear();
+        clearCliScreen();
         printCliBanner();
         continue;
       }
@@ -835,7 +900,7 @@ async function startInteractiveShell() {
 }
 
 async function handleCli(subArgs) {
-  const sub = subArgs[0];
+  const sub = normalizeCommandName(subArgs[0]);
 
   if (!sub || sub === '--help' || sub === '-h') {
     printCliBanner();
@@ -855,6 +920,11 @@ async function handleCli(subArgs) {
 
   if (sub === 'login') {
     await runLoginCommand(subArgs.slice(1));
+    process.exit(0);
+  }
+
+  if (sub === 'logout') {
+    await runLogoutCommand();
     process.exit(0);
   }
 
@@ -1109,8 +1179,15 @@ async function main() {
   if (invokedAsMcp) {
     const cliSubcommands = new Set([
       'login',
+      'signin',
+      'sign-in',
+      'logout',
+      'signout',
+      'sign-out',
       'configure',
       'generate',
+      'status',
+      'quota',
       'update',
       'upgrade',
       '--help',
