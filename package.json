@@ -10,7 +10,8 @@
     "seerxo": "mcp-server.js"
   },
   "scripts": {
-    "start": "node mcp-server.js"
+    "start": "node mcp-server.js",
+    "test": "node --test"
   },
   "keywords": [
     "mcp",
