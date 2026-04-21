@@ -3,6 +3,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import { promises as fsPromises } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import os from 'node:os';
 import path from 'node:path';
 import readline from 'node:readline/promises';
@@ -98,7 +99,7 @@ function setRuntimeConfig({ email, apiKey, host }) {
 
 const getApiEndpoint = () => `${apiHost}/mcp/generate`;
 
-const getFlagValue = (flag, list = []) => {
+export const getFlagValue = (flag, list = []) => {
   const index = list.indexOf(`--${flag}`);
   if (index !== -1 && list[index + 1] && !list[index + 1].startsWith('--')) {
     return list[index + 1];
@@ -966,7 +967,10 @@ async function main() {
   await handleCli(args);
 }
 
-main().catch((err) => {
-  console.error('[seerxo] Fatal error:', err);
-  process.exit(1);
-});
+const isMain = process.argv[1] === fileURLToPath(import.meta.url);
+if (isMain) {
+  main().catch((err) => {
+    console.error('[seerxo] Fatal error:', err);
+    process.exit(1);
+  });
+}
