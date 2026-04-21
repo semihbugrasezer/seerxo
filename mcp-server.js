@@ -123,19 +123,6 @@ const fetchJson = async (url, options = {}) => {
   return data || {};
 };
 
-const promptForEmail = async (
-  message = 'Enter your SEERXO account email: '
-) => {
-  if (!process.stdin.isTTY) return null;
-  const rl = readline.createInterface({ input, output });
-  try {
-    const answer = (await rl.question(message)).trim();
-    return answer || null;
-  } finally {
-    rl.close();
-  }
-};
-
 const printUsage = () => {
   console.log(
     `seerxo ${clientVersion}\n\n` +
