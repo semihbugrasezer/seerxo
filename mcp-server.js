@@ -69,6 +69,144 @@ function syncApiKeyState() {
   apiKeyHeader = state.header;
 }
 
+function printStatus() {
+  const keyState = hasValidApiKey
+    ? `✔ configured (${apiKeyParts[0]})`
+    : `✖ missing or invalid (expected keyId.secret with secret >= ${MIN_API_KEY_SECRET_LENGTH} chars)`;
+
+  console.log(
+    '\n' +
+      chalk.bold('Status:') +
+      '\n' +
+      `  Email : ${userEmail || chalk.red('missing')}\n` +
+      `  Host  : ${apiHost || chalk.red('missing')}\n` +
+      `  Key   : ${keyState}\n`
+  );
+}
+
+const getQuotaEndpoint = () => `${apiHost}/mcp/quota`;
+
+function buildQuotaSummary(usage = {}) {
+  const limitRaw = usage.limit;
+  const remainingRaw = usage.remaining;
+  const usedRaw = usage.current ?? usage.used;
+  const hasFiniteLimit = Number.isFinite(Number(limitRaw));
+  const limit = hasFiniteLimit ? Number(limitRaw) : null;
+  const remaining = Number.isFinite(Number(remainingRaw))
+    ? Math.max(0, Number(remainingRaw))
+    : null;
+  const current =
+    Number.isFinite(Number(usedRaw))
+      ? Math.max(0, Number(usedRaw))
+      : hasFiniteLimit && remaining !== null
+      ? Math.max(0, limit - remaining)
+      : 0;
+
+  if (hasFiniteLimit && remaining !== null) {
+    return {
+      headline: remaining === 0 ? 'No credits left' : `${remaining} credits left`,
+      detail: `${current}/${limit} used`,
+      tone: remaining === 0 ? 'danger' : remaining <= 2 ? 'warning' : 'info',
+    };
+  }
+
+  return {
+    headline: 'Unlimited credits',
+    detail: `${current} used`,
+    tone: 'success',
+  };
+}
+
+function renderQuotaPanel(usage = {}, { title = 'Credits', compact = false } = {}) {
+  const summary = buildQuotaSummary(usage);
+  const accent =
+    summary.tone === 'danger'
+      ? 'red'
+      : summary.tone === 'warning'
+      ? 'yellow'
+      : summary.tone === 'success'
+      ? 'green'
+      : 'cyan';
+
+  const body = compact
+    ? `${chalk.bold(summary.headline)}\n${chalk.gray(summary.detail)}`
+    : [
+        chalk.bold(summary.headline),
+        chalk.gray(summary.detail),
+      ].join('\n');
+
+  return boxen(body, {
+    padding: { top: 0, bottom: 0, left: 1, right: 1 },
+    margin: { top: 0, bottom: 0, left: 0, right: 0 },
+    borderStyle: 'round',
+    borderColor: accent,
+    title,
+    titleAlignment: 'left',
+  });
+}
+
+async function fetchQuota() {
+  if (!userEmail) {
+    throw new Error('Email is not set. Run "seerxo configure" first.');
+  }
+  if (!apiKeyHeader || !apiKeySecret) {
+    throw new Error('API key is not set. Run "seerxo configure" first.');
+  }
+
+  const payload = {};
+  const { signature, timestamp } = generateSignature(payload);
+  const data = await fetchJson(getQuotaEndpoint(), {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'User-Agent': `seerxo/${clientVersion}`,
+      'X-MCP-Signature': signature,
+      'X-MCP-Timestamp': timestamp.toString(),
+      'X-MCP-Version': clientVersion,
+      'X-MCP-API-Key': apiKeyHeader,
+    },
+  });
+
+  return data.quota || null;
+}
+
+async function printStatusWithQuota() {
+  printStatus();
+
+  if (!hasValidApiKey || !userEmail) {
+    return;
+  }
+
+  try {
+    const quota = await fetchQuota();
+    if (quota) {
+      console.log(renderQuotaPanel(quota, { title: 'Live Credits' }));
+    }
+  } catch (error) {
+    console.log(
+      chalk.yellow(
+        `Could not load live credits: ${error.message || 'unknown error'}`
+      )
+    );
+  }
+}
+
+function formatApiErrorMessage(message, status) {
+  const normalizedMessage = typeof message === 'string' ? message : '';
+  const looksLikeInvalidKey =
+    status === 401 ||
+    status === 403 ||
+    /invalid api key|api key not found|api key.*inactive/i.test(
+      normalizedMessage
+    );
+
+  if (looksLikeInvalidKey) {
+    return 'Invalid API key. Run "seerxo login" to refresh credentials.';
+  }
+
+  return normalizedMessage || 'Failed to generate Etsy SEO content';
+}
+
 async function initConfig() {
   localConfig = await loadLocalConfigAsync();
 
@@ -157,6 +295,7 @@ const printUsage = () => {
       `Commands:\n` +
       `  seerxo login [--email you@example.com --host https://api.seerxo.com]\n` +
       `  seerxo configure [--email you@example.com --api-key keyId.secret --host https://api.seerxo.com]\n` +
+      `  seerxo quota        # show remaining credits\n` +
       `  seerxo generate --product \"...\" [--category \"...\"] [--json]\n` +
       `  seerxo update|upgrade   # update CLI to latest\n` +
       `  seerxo --help           # show this message\n` +
@@ -189,7 +328,9 @@ const printCliBanner = () => {
     '',
     chalk.bold('Quick commands'),
     `${chalk.cyan('help')}       ${chalk.gray('Show commands')}`,
+    `${chalk.cyan('clear')}      ${chalk.gray('Clear the screen')}`,
     `${chalk.cyan('status')}     ${chalk.gray('Show config & key state')}`,
+    `${chalk.cyan('quota')}      ${chalk.gray('Show remaining credits')}`,
     `${chalk.cyan('login')}      ${chalk.gray('Open approval link to sign in')}`,
     `${chalk.cyan('configure')}  ${chalk.gray('Set email & API key')}`,
     `${chalk.cyan('generate')}   ${chalk.gray('Guided prompt (product/category)')}`,
@@ -453,8 +594,9 @@ async function generateEtsySEO(productName, category = '') {
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      const message =
+      const rawMessage =
         data?.error || data?.message || `API error: ${response.status}`;
+      const message = formatApiErrorMessage(rawMessage, response.status);
       const payload = {
         message,
         status: response.status,
@@ -560,7 +702,9 @@ async function startInteractiveShell() {
             chalk.gray('  (prefix with "/" if you prefer, e.g. "/status")') +
             '\n' +
             `  ${chalk.cyan('help')}       ${chalk.gray('Show this help')}\n` +
+            `  ${chalk.cyan('clear')}      ${chalk.gray('Clear the screen')}\n` +
             `  ${chalk.cyan('status')}     ${chalk.gray('Show config & key state')}\n` +
+            `  ${chalk.cyan('quota')}      ${chalk.gray('Show remaining credits')}\n` +
             `  ${chalk.cyan('login')}      ${chalk.gray('Open approval link to sign in')}\n` +
             `  ${chalk.cyan('configure')}  ${chalk.gray('Manual email + API key setup')}\n` +
             `  ${chalk.cyan('generate')}   ${chalk.gray(
@@ -571,16 +715,28 @@ async function startInteractiveShell() {
         continue;
       }
 
+      if (cmd === 'clear' || cmd === 'cls') {
+        console.clear();
+        printCliBanner();
+        continue;
+      }
+
       if (cmd === 'status') {
-      console.log(
-        '\n' +
-          chalk.bold('Status:') +
-          '\n' +
-          `  Email : ${userEmail || chalk.red('missing')}\n` +
-          `  Key   : ${hasValidApiKey ? '✔ configured' : `✖ missing or invalid (expected keyId.secret with secret >= ${MIN_API_KEY_SECRET_LENGTH} chars)`}\n`
-      );
-      continue;
-    }
+        await printStatusWithQuota();
+        continue;
+      }
+
+      if (cmd === 'quota') {
+        try {
+          const quota = await fetchQuota();
+          console.log(renderQuotaPanel(quota, { title: 'Live Credits' }));
+        } catch (error) {
+          console.error(
+            chalk.red(error.message || 'Failed to load remaining credits')
+          );
+        }
+        continue;
+      }
 
       if (cmd === 'generate') {
         const productName = (await rl.question('Product: ')).trim();
@@ -591,13 +747,11 @@ async function startInteractiveShell() {
         }
       try {
         const result = await generateEtsySEO(productName, category);
-        const usageInfo = result.usage
-          ? `(${result.usage.current}/${result.usage.limit} used, ${result.usage.remaining} remaining)`
-          : '';
         console.log(
           boxen(
             [
               chalk.bold(`✅ Etsy SEO for "${productName}"`),
+              result.usage ? renderQuotaPanel(result.usage, { title: 'Credits', compact: true }) : '',
               '',
                 chalk.bold('Title:'),
                 result.title,
@@ -610,7 +764,6 @@ async function startInteractiveShell() {
                 '',
                 chalk.bold('Suggested Price:'),
                 result.suggested_price_range,
-                usageInfo ? `\nUsage: ${usageInfo}` : '',
               ].join('\n'),
               {
                 padding: 1,
@@ -641,15 +794,11 @@ async function startInteractiveShell() {
 
       try {
         const result = await generateEtsySEO(productName, category);
-
-        const usageInfo = result.usage
-          ? `(${result.usage.current}/${result.usage.limit} used, ${result.usage.remaining} remaining)`
-          : '';
-
         console.log(
           boxen(
             [
               chalk.bold(`✅ Etsy SEO for "${productName}"`),
+              result.usage ? renderQuotaPanel(result.usage, { title: 'Credits', compact: true }) : '',
               '',
               chalk.bold('Title:'),
               result.title,
@@ -662,7 +811,6 @@ async function startInteractiveShell() {
               '',
               chalk.bold('Suggested Price:'),
               result.suggested_price_range,
-              usageInfo ? `\nUsage: ${usageInfo}` : '',
             ].join('\n'),
             {
               padding: 1,
@@ -710,6 +858,22 @@ async function handleCli(subArgs) {
     process.exit(0);
   }
 
+  if (sub === 'status') {
+    await printStatusWithQuota();
+    process.exit(0);
+  }
+
+  if (sub === 'quota') {
+    try {
+      const quota = await fetchQuota();
+      console.log(renderQuotaPanel(quota, { title: 'Live Credits' }));
+    } catch (error) {
+      console.error(error.message || 'Failed to load remaining credits');
+      process.exit(1);
+    }
+    process.exit(0);
+  }
+
   if (sub === 'generate') {
     if (isInteractiveSession) {
       printCliBanner();
@@ -733,13 +897,11 @@ async function handleCli(subArgs) {
       if (jsonOutput) {
         console.log(JSON.stringify(result, null, 2));
       } else {
-        const usageInfo = result.usage
-          ? `(${result.usage.current}/${result.usage.limit} used, ${result.usage.remaining} remaining)`
-          : '';
         console.log(
           boxen(
             [
               chalk.bold(`✅ Etsy SEO for "${productName}"`),
+              result.usage ? renderQuotaPanel(result.usage, { title: 'Credits', compact: true }) : '',
               '',
               chalk.bold('Title:'),
               result.title,
@@ -752,7 +914,6 @@ async function handleCli(subArgs) {
               '',
               chalk.bold('Suggested Price:'),
               result.suggested_price_range,
-              usageInfo ? `\nUsage: ${usageInfo}` : '',
             ].join('\n'),
             {
               padding: 1,
@@ -869,7 +1030,10 @@ function startMcpServer() {
             );
 
             const usageInfo = result.usage
-              ? `\n\n---\n**Usage:** ${result.usage.current}/${result.usage.limit} generations used (${result.usage.remaining} remaining)`
+              ? (() => {
+                  const summary = buildQuotaSummary(result.usage);
+                  return `\n\n---\n**Credits:** ${summary.headline} (${summary.detail})`;
+                })()
               : '';
 
             const response = {
