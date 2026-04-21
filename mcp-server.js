@@ -22,13 +22,6 @@ const clientVersion = process.env.SEERXO_CLIENT_VERSION || pkg.version;
 const LOGIN_POLL_INTERVAL_MS = 4000;
 const LOGIN_TIMEOUT_MS = 15 * 60 * 1000;
 const isInteractiveSession = process.stdin.isTTY;
-const resolveDefaultUpgradeUrl = (host) =>
-  `${host.replace(/\/$/, '')}/app/billing/redirect/premium`;
-let upgradeUrl =
-  process.env.SEERXO_UPGRADE_URL ||
-  resolveDefaultUpgradeUrl(
-    process.env.SEERXO_HOST || process.env.API_BASE || DEFAULT_HOST
-  );
 
 const loadLocalConfig = () => {
   try {
@@ -404,26 +397,6 @@ function generateSignature(payload) {
     .update(message)
     .digest('hex');
   return { signature, timestamp };
-}
-
-function openUpgradeLink(url = upgradeUrl) {
-  if (!url) return;
-  console.log(chalk.yellow(`
-Usage limit reached. Opening upgrade page: ${url}
-`));
-  try {
-    const openCommand =
-      process.platform === 'darwin'
-        ? { cmd: 'open', args: [url] }
-        : process.platform === 'win32'
-        ? { cmd: 'cmd', args: ['/c', 'start', '', url] }
-        : { cmd: 'xdg-open', args: [url] };
-    const opener = spawn(openCommand.cmd, openCommand.args, {
-      stdio: 'ignore',
-      detached: true,
-    });
-    opener.unref();
-  } catch {}
 }
 
 async function generateEtsySEO(productName, category = '') {
