@@ -330,21 +330,7 @@ const runLoginCommand = async (extraArgs = [], options = {}) => {
     console.log(chalk.cyan(safeApprovalUrl || '(invalid approval URL)'));
     console.log('');
     if (safeApprovalUrl) {
-      try {
-        const openCommand =
-          process.platform === 'darwin'
-            ? { cmd: 'open', args: [safeApprovalUrl] }
-            : process.platform === 'win32'
-            ? { cmd: 'cmd', args: ['/c', 'start', '', safeApprovalUrl] }
-            : { cmd: 'xdg-open', args: [safeApprovalUrl] };
-
-        const opener = spawn(openCommand.cmd, openCommand.args, {
-          stdio: 'ignore',
-          detached: true,
-        });
-        opener.unref();
-      } catch {
-      }
+      openUrlInBrowser(safeApprovalUrl);
     }
 
     console.log('Waiting for approval...\n');
@@ -396,6 +382,26 @@ const runLoginCommand = async (extraArgs = [], options = {}) => {
   }
 };
 
+function openUrlInBrowser(url) {
+  try {
+    const openCommand =
+      process.platform === 'darwin'
+        ? { cmd: 'open', args: [url] }
+        : process.platform === 'win32'
+        ? { cmd: 'cmd', args: ['/c', 'start', '', url] }
+        : { cmd: 'xdg-open', args: [url] };
+
+    const opener = spawn(openCommand.cmd, openCommand.args, {
+      stdio: 'ignore',
+      detached: true,
+    });
+    opener.unref();
+  } catch (error) {
+    // Best-effort operation to open browser, ignore the failure to allow execution to proceed
+    console.error('Failed to open URL in browser:', error);
+  }
+}
+
 function generateSignature(payload) {
   const timestamp = Date.now().toString();
   const message = JSON.stringify(payload) + timestamp;
@@ -411,19 +417,7 @@ function openUpgradeLink(url = upgradeUrl) {
   console.log(chalk.yellow(`
 Usage limit reached. Opening upgrade page: ${url}
 `));
-  try {
-    const openCommand =
-      process.platform === 'darwin'
-        ? { cmd: 'open', args: [url] }
-        : process.platform === 'win32'
-        ? { cmd: 'cmd', args: ['/c', 'start', '', url] }
-        : { cmd: 'xdg-open', args: [url] };
-    const opener = spawn(openCommand.cmd, openCommand.args, {
-      stdio: 'ignore',
-      detached: true,
-    });
-    opener.unref();
-  } catch {}
+  openUrlInBrowser(url);
 }
 
 async function generateEtsySEO(productName, category = '') {
