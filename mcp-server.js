@@ -76,7 +76,7 @@ function normalizeHost(value) {
   return value ? value.replace(/\/$/, '') : DEFAULT_HOST;
 }
 
-function isSafeHttpUrl(value) {
+export function isSafeHttpUrl(value) {
   try {
     const parsed = new URL(value);
     return parsed.protocol === 'http:' || parsed.protocol === 'https:';
@@ -966,7 +966,9 @@ async function main() {
   await handleCli(args);
 }
 
-main().catch((err) => {
-  console.error('[seerxo] Fatal error:', err);
-  process.exit(1);
-});
+if (process.env.NODE_ENV !== 'test') {
+  main().catch((err) => {
+    console.error('[seerxo] Fatal error:', err);
+    process.exit(1);
+  });
+}
