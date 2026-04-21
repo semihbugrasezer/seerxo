@@ -24,40 +24,51 @@ const LOGIN_POLL_INTERVAL_MS = 4000;
 const LOGIN_TIMEOUT_MS = 15 * 60 * 1000;
 const isInteractiveSession = process.stdin.isTTY;
 
-const loadLocalConfig = () => {
+const loadLocalConfigAsync = async () => {
   try {
-    const data = fs.readFileSync(CONFIG_PATH, 'utf8');
+    const data = await fsPromises.readFile(CONFIG_PATH, 'utf8');
     return JSON.parse(data);
   } catch {
     return {};
   }
 };
 
-const localConfig = loadLocalConfig();
+let localConfig = {};
+let userEmail = null;
+let rawApiKey = null;
+let apiHost = DEFAULT_HOST;
+let apiKeyParts = [];
+let hasValidApiKey = false;
+let apiKeySecret = null;
+let apiKeyHeader = null;
 
-let userEmail =
-  process.env.SEERXO_EMAIL ||
-  process.env.EMAIL ||
-  localConfig.email ||
-  null;
+async function initConfig() {
+  localConfig = await loadLocalConfigAsync();
 
-let rawApiKey =
-  process.env.SEERXO_API_KEY ||
-  process.env.MCP_API_KEY ||
-  localConfig.apiKey ||
-  null;
+  userEmail =
+    process.env.SEERXO_EMAIL ||
+    process.env.EMAIL ||
+    localConfig.email ||
+    null;
 
-let apiHost = normalizeHost(
-  process.env.SEERXO_HOST ||
-    process.env.API_BASE ||
-    localConfig.host ||
-    DEFAULT_HOST
-);
+  rawApiKey =
+    process.env.SEERXO_API_KEY ||
+    process.env.MCP_API_KEY ||
+    localConfig.apiKey ||
+    null;
 
-let apiKeyParts = rawApiKey ? rawApiKey.split('.') : [];
-let hasValidApiKey = apiKeyParts.length === 2 && apiKeyParts.every(Boolean);
-let apiKeySecret = hasValidApiKey ? apiKeyParts[1] : null;
-let apiKeyHeader = hasValidApiKey ? rawApiKey : null;
+  apiHost = normalizeHost(
+    process.env.SEERXO_HOST ||
+      process.env.API_BASE ||
+      localConfig.host ||
+      DEFAULT_HOST
+  );
+
+  apiKeyParts = rawApiKey ? rawApiKey.split('.') : [];
+  hasValidApiKey = apiKeyParts.length === 2 && apiKeyParts.every(Boolean);
+  apiKeySecret = hasValidApiKey ? apiKeyParts[1] : null;
+  apiKeyHeader = hasValidApiKey ? rawApiKey : null;
+}
 
 const args = process.argv.slice(2);
 const invokedPath = process.argv[1] || '';
@@ -913,6 +924,8 @@ function startMcpServer() {
 }
 
 async function main() {
+  await initConfig();
+
   if (invokedAsSeerxo) {
     if (args.length === 0) {
       await startInteractiveShell();
