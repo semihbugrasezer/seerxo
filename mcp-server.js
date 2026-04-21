@@ -3,6 +3,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import { promises as fsPromises } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import os from 'node:os';
 import path from 'node:path';
 import readline from 'node:readline/promises';
@@ -22,48 +23,52 @@ const clientVersion = process.env.SEERXO_CLIENT_VERSION || pkg.version;
 const LOGIN_POLL_INTERVAL_MS = 4000;
 const LOGIN_TIMEOUT_MS = 15 * 60 * 1000;
 const isInteractiveSession = process.stdin.isTTY;
-const resolveDefaultUpgradeUrl = (host) =>
-  `${host.replace(/\/$/, '')}/app/billing/redirect/premium`;
-let upgradeUrl =
-  process.env.SEERXO_UPGRADE_URL ||
-  resolveDefaultUpgradeUrl(
-    process.env.SEERXO_HOST || process.env.API_BASE || DEFAULT_HOST
-  );
 
-const loadLocalConfig = () => {
+const loadLocalConfigAsync = async () => {
   try {
-    const data = fs.readFileSync(CONFIG_PATH, 'utf8');
+    const data = await fsPromises.readFile(CONFIG_PATH, 'utf8');
     return JSON.parse(data);
   } catch {
     return {};
   }
 };
 
-const localConfig = loadLocalConfig();
+let localConfig = {};
+let userEmail = null;
+let rawApiKey = null;
+let apiHost = DEFAULT_HOST;
+let apiKeyParts = [];
+let hasValidApiKey = false;
+let apiKeySecret = null;
+let apiKeyHeader = null;
 
-let userEmail =
-  process.env.SEERXO_EMAIL ||
-  process.env.EMAIL ||
-  localConfig.email ||
-  null;
+async function initConfig() {
+  localConfig = await loadLocalConfigAsync();
 
-let rawApiKey =
-  process.env.SEERXO_API_KEY ||
-  process.env.MCP_API_KEY ||
-  localConfig.apiKey ||
-  null;
+  userEmail =
+    process.env.SEERXO_EMAIL ||
+    process.env.EMAIL ||
+    localConfig.email ||
+    null;
 
-let apiHost = normalizeHost(
-  process.env.SEERXO_HOST ||
-    process.env.API_BASE ||
-    localConfig.host ||
-    DEFAULT_HOST
-);
+  rawApiKey =
+    process.env.SEERXO_API_KEY ||
+    process.env.MCP_API_KEY ||
+    localConfig.apiKey ||
+    null;
 
-let apiKeyParts = rawApiKey ? rawApiKey.split('.') : [];
-let hasValidApiKey = apiKeyParts.length === 2 && apiKeyParts.every(Boolean);
-let apiKeySecret = hasValidApiKey ? apiKeyParts[1] : null;
-let apiKeyHeader = hasValidApiKey ? rawApiKey : null;
+  apiHost = normalizeHost(
+    process.env.SEERXO_HOST ||
+      process.env.API_BASE ||
+      localConfig.host ||
+      DEFAULT_HOST
+  );
+
+  apiKeyParts = rawApiKey ? rawApiKey.split('.') : [];
+  hasValidApiKey = apiKeyParts.length === 2 && apiKeyParts.every(Boolean);
+  apiKeySecret = hasValidApiKey ? apiKeyParts[1] : null;
+  apiKeyHeader = hasValidApiKey ? rawApiKey : null;
+}
 
 const args = process.argv.slice(2);
 const invokedPath = process.argv[1] || '';
@@ -81,7 +86,7 @@ function isSafeHttpUrl(value) {
   }
 }
 
-function setRuntimeConfig({ email, apiKey, host }) {
+export function setRuntimeConfig({ email, apiKey, host }) {
   if (email) userEmail = email;
   if (apiKey) rawApiKey = apiKey;
   if (host) apiHost = normalizeHost(host);
@@ -94,7 +99,7 @@ function setRuntimeConfig({ email, apiKey, host }) {
 
 const getApiEndpoint = () => `${apiHost}/mcp/generate`;
 
-const getFlagValue = (flag, list = []) => {
+export const getFlagValue = (flag, list = []) => {
   const index = list.indexOf(`--${flag}`);
   if (index !== -1 && list[index + 1] && !list[index + 1].startsWith('--')) {
     return list[index + 1];
@@ -123,19 +128,6 @@ const fetchJson = async (url, options = {}) => {
   }
 
   return data || {};
-};
-
-const promptForEmail = async (
-  message = 'Enter your SEERXO account email: '
-) => {
-  if (!process.stdin.isTTY) return null;
-  const rl = readline.createInterface({ input, output });
-  try {
-    const answer = (await rl.question(message)).trim();
-    return answer || null;
-  } finally {
-    rl.close();
-  }
 };
 
 const printUsage = () => {
@@ -326,21 +318,7 @@ const runLoginCommand = async (extraArgs = [], options = {}) => {
     console.log(chalk.cyan(safeApprovalUrl || '(invalid approval URL)'));
     console.log('');
     if (safeApprovalUrl) {
-      try {
-        const openCommand =
-          process.platform === 'darwin'
-            ? { cmd: 'open', args: [safeApprovalUrl] }
-            : process.platform === 'win32'
-            ? { cmd: 'cmd', args: ['/c', 'start', '', safeApprovalUrl] }
-            : { cmd: 'xdg-open', args: [safeApprovalUrl] };
-
-        const opener = spawn(openCommand.cmd, openCommand.args, {
-          stdio: 'ignore',
-          detached: true,
-        });
-        opener.unref();
-      } catch {
-      }
+      openUrlInBrowser(safeApprovalUrl);
     }
 
     console.log('Waiting for approval...\n');
@@ -392,7 +370,7 @@ const runLoginCommand = async (extraArgs = [], options = {}) => {
   }
 };
 
-function generateSignature(payload) {
+export function generateSignature(payload) {
   const timestamp = Date.now().toString();
   const message = JSON.stringify(payload) + timestamp;
   const signature = crypto
@@ -408,19 +386,11 @@ function openUpgradeLink(url = upgradeUrl) {
 Usage limit reached. Opening upgrade page: ${url}
 `));
   try {
-    const openCommand =
-      process.platform === 'darwin'
-        ? { cmd: 'open', args: [url] }
-        : process.platform === 'win32'
-        ? { cmd: 'cmd', args: ['/c', 'start', '', url] }
-        : { cmd: 'xdg-open', args: [url] };
-    const opener = spawn(openCommand.cmd, openCommand.args, {
-      stdio: 'ignore',
-      detached: true,
-    });
-    opener.unref();
+    open(url).catch(() => {});
   } catch {}
 }
+
+const seoCache = new Map();
 
 async function generateEtsySEO(productName, category = '') {
   if (!userEmail) {
@@ -428,6 +398,11 @@ async function generateEtsySEO(productName, category = '') {
   }
   if (!apiKeyHeader || !apiKeySecret) {
     throw new Error('API key is not set. Run "seerxo configure" first.');
+  }
+
+  const cacheKey = `${productName.trim().toLowerCase()}|${(category || '').trim().toLowerCase()}`;
+  if (seoCache.has(cacheKey)) {
+    return seoCache.get(cacheKey);
   }
 
   try {
@@ -477,10 +452,14 @@ async function generateEtsySEO(productName, category = '') {
       throw error;
     }
 
-    return {
+    const result = {
       ...data.data,
       usage: data.usage,
     };
+
+    seoCache.set(cacheKey, result);
+
+    return result;
   } catch (error) {
     throw new Error(error.message || 'Failed to generate Etsy SEO content', {
       cause: error,
@@ -929,6 +908,8 @@ function startMcpServer() {
 }
 
 async function main() {
+  await initConfig();
+
   if (invokedAsSeerxo) {
     if (args.length === 0) {
       await startInteractiveShell();
@@ -939,7 +920,7 @@ async function main() {
   }
 
   if (invokedAsMcp) {
-    const cliSubcommands = [
+    const cliSubcommands = new Set([
       'login',
       'configure',
       'generate',
@@ -949,8 +930,8 @@ async function main() {
       '-h',
       '--version',
       '-v',
-    ];
-    if (args.length > 0 && cliSubcommands.includes(args[0])) {
+    ]);
+    if (args.length > 0 && cliSubcommands.has(args[0])) {
       await handleCli(args);
       return;
     }
@@ -962,7 +943,9 @@ async function main() {
   await handleCli(args);
 }
 
-main().catch((err) => {
-  console.error('[seerxo] Fatal error:', err);
-  process.exit(1);
-});
+if (process.env.NODE_ENV !== 'test') {
+  main().catch((err) => {
+    console.error('[seerxo] Fatal error:', err);
+    process.exit(1);
+  });
+}
