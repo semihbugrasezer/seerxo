@@ -12,6 +12,7 @@ import { createRequire } from 'node:module';
 import { execSync, spawn } from 'node:child_process';
 import boxen from 'boxen';
 import chalk from 'chalk';
+import open from 'open';
 
 const require = createRequire(import.meta.url);
 const pkg = require('./package.json');
@@ -389,7 +390,9 @@ function openUpgradeLink(url = upgradeUrl) {
   console.log(chalk.yellow(`
 Usage limit reached. Opening upgrade page: ${url}
 `));
-  openUrlInBrowser(url);
+  try {
+    open(url).catch(() => {});
+  } catch {}
 }
 
 const seoCache = new Map();
