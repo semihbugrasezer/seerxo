@@ -85,7 +85,7 @@ function isSafeHttpUrl(value) {
   }
 }
 
-function setRuntimeConfig({ email, apiKey, host }) {
+export function setRuntimeConfig({ email, apiKey, host }) {
   if (email) userEmail = email;
   if (apiKey) rawApiKey = apiKey;
   if (host) apiHost = normalizeHost(host);
@@ -396,7 +396,7 @@ const runLoginCommand = async (extraArgs = [], options = {}) => {
   }
 };
 
-function generateSignature(payload) {
+export function generateSignature(payload) {
   const timestamp = Date.now().toString();
   const message = JSON.stringify(payload) + timestamp;
   const signature = crypto
@@ -966,7 +966,9 @@ async function main() {
   await handleCli(args);
 }
 
-main().catch((err) => {
-  console.error('[seerxo] Fatal error:', err);
-  process.exit(1);
-});
+if (process.env.NODE_ENV !== 'test') {
+  main().catch((err) => {
+    console.error('[seerxo] Fatal error:', err);
+    process.exit(1);
+  });
+}

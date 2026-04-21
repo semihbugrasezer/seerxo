@@ -10,7 +10,8 @@
     "seerxo": "mcp-server.js"
   },
   "scripts": {
-    "start": "node mcp-server.js"
+    "start": "node mcp-server.js",
+    "test": "NODE_ENV=test NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "keywords": [
     "mcp",
@@ -48,5 +49,8 @@
     "mcp-server.js",
     "README.md",
     "LICENSE"
-  ]
+  ],
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
 }
