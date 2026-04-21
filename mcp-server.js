@@ -11,13 +11,13 @@ import { createRequire } from 'node:module';
 import { execSync, spawn } from 'node:child_process';
 import boxen from 'boxen';
 import chalk from 'chalk';
+import { DEFAULT_HOST, normalizeHost } from './utils.js';
 
 const require = createRequire(import.meta.url);
 const pkg = require('./package.json');
 
 const CONFIG_DIR = path.join(os.homedir(), '.seerxo-mcp');
 const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
-const DEFAULT_HOST = 'https://api.seerxo.com';
 const clientVersion = process.env.SEERXO_CLIENT_VERSION || pkg.version;
 const LOGIN_POLL_INTERVAL_MS = 4000;
 const LOGIN_TIMEOUT_MS = 15 * 60 * 1000;
@@ -71,10 +71,6 @@ const invokedAs = path.basename(invokedPath);
 const invokedAsMcp =
   invokedAs === 'seerxo-mcp' || invokedAs === 'etsy-seo-mcp' || invokedAs === 'seerxo';
 const invokedAsSeerxo = invokedAs === 'seerxo';
-
-function normalizeHost(value) {
-  return value ? value.replace(/\/$/, '') : DEFAULT_HOST;
-}
 
 function isSafeHttpUrl(value) {
   try {
