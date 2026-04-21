@@ -943,7 +943,7 @@ async function main() {
   }
 
   if (invokedAsMcp) {
-    const cliSubcommands = [
+    const cliSubcommands = new Set([
       'login',
       'configure',
       'generate',
@@ -953,8 +953,8 @@ async function main() {
       '-h',
       '--version',
       '-v',
-    ];
-    if (args.length > 0 && cliSubcommands.includes(args[0])) {
+    ]);
+    if (args.length > 0 && cliSubcommands.has(args[0])) {
       await handleCli(args);
       return;
     }
