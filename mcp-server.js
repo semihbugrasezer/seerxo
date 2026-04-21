@@ -12,7 +12,22 @@ import { createRequire } from 'node:module';
 import { execSync, spawn } from 'node:child_process';
 import boxen from 'boxen';
 import chalk from 'chalk';
+import open from 'open';
 import { DEFAULT_HOST, normalizeHost } from './utils.js';
+
+function openUrlInBrowser(url) {
+  try {
+    open(url).catch(() => {
+      // Fallback: try platform-specific commands
+      const cmd = process.platform === 'darwin' ? 'open'
+        : process.platform === 'win32' ? 'start'
+        : 'xdg-open';
+      spawn(cmd, [url], { detached: true, stdio: 'ignore' }).unref();
+    });
+  } catch {
+    // Silent fail — URL is already printed to console
+  }
+}
 
 const require = createRequire(import.meta.url);
 const pkg = require('./package.json');
@@ -497,13 +512,7 @@ const runLoginCommand = async (extraArgs = [], options = {}) => {
     printCliBanner();
   }
 
-  let email = getFlagValue('email', extraArgs) || userEmail;
-  if (!email) {
-    console.error(
-      'Email is required for CLI login. Set it once with "seerxo configure --email you@example.com".'
-    );
-    process.exit(1);
-  }
+  let email = getFlagValue('email', extraArgs) || userEmail || '';
 
   const host = normalizeHost(getFlagValue('host', extraArgs) || apiHost);
 
