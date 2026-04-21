@@ -311,24 +311,7 @@ const runLoginCommand = async (extraArgs = [], options = {}) => {
     console.log(chalk.cyan(safeApprovalUrl || '(invalid approval URL)'));
     console.log('');
     if (safeApprovalUrl) {
-      try {
-        const openCommand =
-          process.platform === 'darwin'
-            ? { cmd: 'open', args: [safeApprovalUrl] }
-            : process.platform === 'win32'
-            ? { cmd: 'cmd', args: ['/c', 'start', '', safeApprovalUrl] }
-            : { cmd: 'xdg-open', args: [safeApprovalUrl] };
-
-        const opener = spawn(openCommand.cmd, openCommand.args, {
-          stdio: 'ignore',
-          detached: true,
-        });
-        opener.unref();
-      } catch (error) {
-        // We ignore errors here as browser opening is a best-effort action.
-        // The URL is already printed to the console as a fallback.
-        console.error('[seerxo] Failed to open browser automatically:', error.message);
-      }
+      openUrlInBrowser(safeApprovalUrl);
     }
 
     console.log('Waiting for approval...\n');
@@ -380,6 +363,31 @@ const runLoginCommand = async (extraArgs = [], options = {}) => {
   }
 };
 
+function openUrlInBrowser(url) {
+  try {
+    if (!isSafeHttpUrl(url)) {
+      console.error('Refusing to open invalid URL in browser.');
+      return;
+    }
+
+    const openCommand =
+      process.platform === 'darwin'
+        ? { cmd: 'open', args: [url] }
+        : process.platform === 'win32'
+        ? { cmd: 'explorer.exe', args: [url] }
+        : { cmd: 'xdg-open', args: [url] };
+
+    const opener = spawn(openCommand.cmd, openCommand.args, {
+      stdio: 'ignore',
+      detached: true,
+    });
+    opener.unref();
+  } catch (error) {
+    // Best-effort operation to open browser, ignore the failure to allow execution to proceed
+    console.error('Failed to open URL in browser:', error);
+  }
+}
+
 function generateSignature(payload) {
   const timestamp = Date.now().toString();
   const message = JSON.stringify(payload) + timestamp;
@@ -388,6 +396,14 @@ function generateSignature(payload) {
     .update(message)
     .digest('hex');
   return { signature, timestamp };
+}
+
+function openUpgradeLink(url = upgradeUrl) {
+  if (!url) return;
+  console.log(chalk.yellow(`
+Usage limit reached. Opening upgrade page: ${url}
+`));
+  openUrlInBrowser(url);
 }
 
 async function generateEtsySEO(productName, category = '') {
