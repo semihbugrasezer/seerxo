@@ -70,7 +70,7 @@ function normalizeHost(value) {
   return value ? value.replace(/\/$/, '') : DEFAULT_HOST;
 }
 
-function isSafeHttpUrl(value) {
+export function isSafeHttpUrl(value) {
   try {
     const parsed = new URL(value);
     return parsed.protocol === 'http:' || parsed.protocol === 'https:';

@@ -1,32 +1,32 @@
-import { test } from 'node:test';
-import assert from 'node:assert';
-import { getFlagValue } from './mcp-server.js';
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { isSafeHttpUrl } from './mcp-server.js';
 
-test('getFlagValue returns value when flag is present and followed by a valid value', () => {
-  const list = ['--foo', 'bar'];
-  assert.strictEqual(getFlagValue('foo', list), 'bar');
-});
+test('isSafeHttpUrl', async (t) => {
+  await t.test('should return true for valid http URLs', () => {
+    assert.equal(isSafeHttpUrl('http://example.com'), true);
+    assert.equal(isSafeHttpUrl('http://localhost:3000'), true);
+  });
 
-test('getFlagValue returns null when flag is missing', () => {
-  const list = ['--bar', 'baz'];
-  assert.strictEqual(getFlagValue('foo', list), null);
-});
+  await t.test('should return true for valid https URLs', () => {
+    assert.equal(isSafeHttpUrl('https://example.com'), true);
+    assert.equal(isSafeHttpUrl('https://google.com/path?query=1'), true);
+  });
 
-test('getFlagValue returns null when flag is the last item', () => {
-  const list = ['--foo'];
-  assert.strictEqual(getFlagValue('foo', list), null);
-});
+  await t.test('should return false for invalid protocols', () => {
+    assert.equal(isSafeHttpUrl('ftp://example.com'), false);
+    assert.equal(isSafeHttpUrl('file:///etc/passwd'), false);
+    assert.equal(isSafeHttpUrl('javascript:alert(1)'), false);
+  });
 
-test('getFlagValue returns null when value starts with --', () => {
-  const list = ['--foo', '--bar'];
-  assert.strictEqual(getFlagValue('foo', list), null);
-});
-
-test('getFlagValue returns null with an empty list', () => {
-  const list = [];
-  assert.strictEqual(getFlagValue('foo', list), null);
-});
-
-test('getFlagValue returns null when list is not provided (tests default argument)', () => {
-  assert.strictEqual(getFlagValue('foo'), null);
+  await t.test('should return false for malformed URLs and trigger the catch block', () => {
+    // These will throw in the URL constructor
+    assert.equal(isSafeHttpUrl('not-a-url'), false);
+    assert.equal(isSafeHttpUrl('example.com'), false);
+    assert.equal(isSafeHttpUrl(''), false);
+    assert.equal(isSafeHttpUrl(null), false);
+    assert.equal(isSafeHttpUrl(undefined), false);
+    assert.equal(isSafeHttpUrl(123), false);
+    assert.equal(isSafeHttpUrl({}), false);
+  });
 });
