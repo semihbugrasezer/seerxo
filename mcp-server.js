@@ -324,7 +324,10 @@ const runLoginCommand = async (extraArgs = [], options = {}) => {
           detached: true,
         });
         opener.unref();
-      } catch {
+      } catch (error) {
+        // We ignore errors here as browser opening is a best-effort action.
+        // The URL is already printed to the console as a fallback.
+        console.error('[seerxo] Failed to open browser automatically:', error.message);
       }
     }
 
