@@ -25,6 +25,24 @@ test('mcp-server prints help with --help', () => {
   assert.match(output, /seerxo generate/);
 });
 
+test('mcp-server prints status with configured credentials', () => {
+  const output = execFileSync('node', [cliPath, 'status'], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      NODE_ENV: 'cli-test',
+      SEERXO_EMAIL: 'semih@example.com',
+      SEERXO_API_KEY:
+        'keyid.someVeryLongSecret1234567890',
+      SEERXO_HOST: 'https://api.seerxo.com',
+    },
+  });
+  assert.match(output, /Status:/);
+  assert.match(output, /semih@example.com/);
+  assert.match(output, /https:\/\/api\.seerxo\.com/);
+  assert.match(output, /configured \(keyid\)/);
+});
+
 test('mcp-server requires arguments for generate', () => {
   assert.throws(
     () => execFileSync('node', [cliPath, 'generate'], {
