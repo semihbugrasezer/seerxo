@@ -48,6 +48,7 @@
   },
   "files": [
     "mcp-server.js",
+    "utils.js",
     "README.md",
     "LICENSE"
   ],
