@@ -90,7 +90,7 @@ export function isSafeHttpUrl(value) {
   }
 }
 
-function setRuntimeConfig({ email, apiKey, host }) {
+export function setRuntimeConfig({ email, apiKey, host }) {
   if (email) userEmail = email;
   if (apiKey) rawApiKey = apiKey;
   if (host) apiHost = normalizeHost(host);
@@ -374,32 +374,7 @@ const runLoginCommand = async (extraArgs = [], options = {}) => {
   }
 };
 
-function openUrlInBrowser(url) {
-  try {
-    if (!isSafeHttpUrl(url)) {
-      console.error('Refusing to open invalid URL in browser.');
-      return;
-    }
-
-    const openCommand =
-      process.platform === 'darwin'
-        ? { cmd: 'open', args: [url] }
-        : process.platform === 'win32'
-        ? { cmd: 'explorer.exe', args: [url] }
-        : { cmd: 'xdg-open', args: [url] };
-
-    const opener = spawn(openCommand.cmd, openCommand.args, {
-      stdio: 'ignore',
-      detached: true,
-    });
-    opener.unref();
-  } catch (error) {
-    // Best-effort operation to open browser, ignore the failure to allow execution to proceed
-    console.error('Failed to open URL in browser:', error);
-  }
-}
-
-function generateSignature(payload) {
+export function generateSignature(payload) {
   const timestamp = Date.now().toString();
   const message = JSON.stringify(payload) + timestamp;
   const signature = crypto
@@ -959,8 +934,7 @@ async function main() {
   await handleCli(args);
 }
 
-const isMain = process.argv[1] === fileURLToPath(import.meta.url);
-if (isMain) {
+if (process.env.NODE_ENV !== 'test') {
   main().catch((err) => {
     console.error('[seerxo] Fatal error:', err);
     process.exit(1);
