@@ -11,6 +11,7 @@ import { createRequire } from 'node:module';
 import { execSync, spawn } from 'node:child_process';
 import boxen from 'boxen';
 import chalk from 'chalk';
+import open from 'open';
 
 const require = createRequire(import.meta.url);
 const pkg = require('./package.json');
@@ -331,18 +332,7 @@ const runLoginCommand = async (extraArgs = [], options = {}) => {
     console.log('');
     if (safeApprovalUrl) {
       try {
-        const openCommand =
-          process.platform === 'darwin'
-            ? { cmd: 'open', args: [safeApprovalUrl] }
-            : process.platform === 'win32'
-            ? { cmd: 'cmd', args: ['/c', 'start', '', safeApprovalUrl] }
-            : { cmd: 'xdg-open', args: [safeApprovalUrl] };
-
-        const opener = spawn(openCommand.cmd, openCommand.args, {
-          stdio: 'ignore',
-          detached: true,
-        });
-        opener.unref();
+        open(safeApprovalUrl).catch(() => {});
       } catch {
       }
     }
@@ -412,17 +402,7 @@ function openUpgradeLink(url = upgradeUrl) {
 Usage limit reached. Opening upgrade page: ${url}
 `));
   try {
-    const openCommand =
-      process.platform === 'darwin'
-        ? { cmd: 'open', args: [url] }
-        : process.platform === 'win32'
-        ? { cmd: 'cmd', args: ['/c', 'start', '', url] }
-        : { cmd: 'xdg-open', args: [url] };
-    const opener = spawn(openCommand.cmd, openCommand.args, {
-      stdio: 'ignore',
-      detached: true,
-    });
-    opener.unref();
+    open(url).catch(() => {});
   } catch {}
 }
 
