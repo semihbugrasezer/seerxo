@@ -384,11 +384,16 @@ const runLoginCommand = async (extraArgs = [], options = {}) => {
 
 function openUrlInBrowser(url) {
   try {
+    if (!isSafeHttpUrl(url)) {
+      console.error('Refusing to open invalid URL in browser.');
+      return;
+    }
+
     const openCommand =
       process.platform === 'darwin'
         ? { cmd: 'open', args: [url] }
         : process.platform === 'win32'
-        ? { cmd: 'cmd', args: ['/c', 'start', '', url] }
+        ? { cmd: 'explorer.exe', args: [url] }
         : { cmd: 'xdg-open', args: [url] };
 
     const opener = spawn(openCommand.cmd, openCommand.args, {
