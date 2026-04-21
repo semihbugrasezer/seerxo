@@ -236,7 +236,8 @@ function formatApiErrorMessage(message, status) {
     );
 
   if (looksLikeInvalidKey) {
-    return 'Invalid API key. Run "seerxo login" to refresh credentials.';
+    const detail = normalizedMessage ? ` (${normalizedMessage})` : '';
+    return `Invalid API key${detail}. Run "seerxo login" to refresh credentials.`;
   }
 
   return normalizedMessage || 'Failed to generate Etsy SEO content';
