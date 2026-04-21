@@ -3,6 +3,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import { promises as fsPromises } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import os from 'node:os';
 import path from 'node:path';
 import readline from 'node:readline/promises';
@@ -22,13 +23,6 @@ const clientVersion = process.env.SEERXO_CLIENT_VERSION || pkg.version;
 const LOGIN_POLL_INTERVAL_MS = 4000;
 const LOGIN_TIMEOUT_MS = 15 * 60 * 1000;
 const isInteractiveSession = process.stdin.isTTY;
-const resolveDefaultUpgradeUrl = (host) =>
-  `${host.replace(/\/$/, '')}/app/billing/redirect/premium`;
-let upgradeUrl =
-  process.env.SEERXO_UPGRADE_URL ||
-  resolveDefaultUpgradeUrl(
-    process.env.SEERXO_HOST || process.env.API_BASE || DEFAULT_HOST
-  );
 
 const loadLocalConfig = () => {
   try {
@@ -98,7 +92,7 @@ function setRuntimeConfig({ email, apiKey, host }) {
 
 const getApiEndpoint = () => `${apiHost}/mcp/generate`;
 
-const getFlagValue = (flag, list = []) => {
+export const getFlagValue = (flag, list = []) => {
   const index = list.indexOf(`--${flag}`);
   if (index !== -1 && list[index + 1] && !list[index + 1].startsWith('--')) {
     return list[index + 1];
@@ -127,19 +121,6 @@ const fetchJson = async (url, options = {}) => {
   }
 
   return data || {};
-};
-
-const promptForEmail = async (
-  message = 'Enter your SEERXO account email: '
-) => {
-  if (!process.stdin.isTTY) return null;
-  const rl = readline.createInterface({ input, output });
-  try {
-    const answer = (await rl.question(message)).trim();
-    return answer || null;
-  } finally {
-    rl.close();
-  }
 };
 
 const printUsage = () => {
@@ -404,26 +385,6 @@ function generateSignature(payload) {
     .update(message)
     .digest('hex');
   return { signature, timestamp };
-}
-
-function openUpgradeLink(url = upgradeUrl) {
-  if (!url) return;
-  console.log(chalk.yellow(`
-Usage limit reached. Opening upgrade page: ${url}
-`));
-  try {
-    const openCommand =
-      process.platform === 'darwin'
-        ? { cmd: 'open', args: [url] }
-        : process.platform === 'win32'
-        ? { cmd: 'cmd', args: ['/c', 'start', '', url] }
-        : { cmd: 'xdg-open', args: [url] };
-    const opener = spawn(openCommand.cmd, openCommand.args, {
-      stdio: 'ignore',
-      detached: true,
-    });
-    opener.unref();
-  } catch {}
 }
 
 async function generateEtsySEO(productName, category = '') {
@@ -943,7 +904,7 @@ async function main() {
   }
 
   if (invokedAsMcp) {
-    const cliSubcommands = [
+    const cliSubcommands = new Set([
       'login',
       'configure',
       'generate',
@@ -953,8 +914,8 @@ async function main() {
       '-h',
       '--version',
       '-v',
-    ];
-    if (args.length > 0 && cliSubcommands.includes(args[0])) {
+    ]);
+    if (args.length > 0 && cliSubcommands.has(args[0])) {
       await handleCli(args);
       return;
     }
@@ -966,7 +927,8 @@ async function main() {
   await handleCli(args);
 }
 
-if (process.env.NODE_ENV !== 'test') {
+const isMain = process.argv[1] === fileURLToPath(import.meta.url);
+if (isMain) {
   main().catch((err) => {
     console.error('[seerxo] Fatal error:', err);
     process.exit(1);
