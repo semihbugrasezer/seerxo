@@ -426,12 +426,19 @@ Usage limit reached. Opening upgrade page: ${url}
   } catch {}
 }
 
+const seoCache = new Map();
+
 async function generateEtsySEO(productName, category = '') {
   if (!userEmail) {
     throw new Error('Email is not set. Run "seerxo configure" first.');
   }
   if (!apiKeyHeader || !apiKeySecret) {
     throw new Error('API key is not set. Run "seerxo configure" first.');
+  }
+
+  const cacheKey = `${productName.trim().toLowerCase()}|${(category || '').trim().toLowerCase()}`;
+  if (seoCache.has(cacheKey)) {
+    return seoCache.get(cacheKey);
   }
 
   try {
@@ -481,10 +488,14 @@ async function generateEtsySEO(productName, category = '') {
       throw error;
     }
 
-    return {
+    const result = {
       ...data.data,
       usage: data.usage,
     };
+
+    seoCache.set(cacheKey, result);
+
+    return result;
   } catch (error) {
     throw new Error(error.message || 'Failed to generate Etsy SEO content', {
       cause: error,
