@@ -343,7 +343,10 @@ const runLoginCommand = async (extraArgs = [], options = {}) => {
           detached: true,
         });
         opener.unref();
-      } catch {
+      } catch (error) {
+        // We ignore errors here as browser opening is a best-effort action.
+        // The URL is already printed to the console as a fallback.
+        console.error('[seerxo] Failed to open browser automatically:', error.message);
       }
     }
 
@@ -423,7 +426,11 @@ Usage limit reached. Opening upgrade page: ${url}
       detached: true,
     });
     opener.unref();
-  } catch {}
+  } catch (error) {
+    // We ignore errors here as browser opening is a best-effort action.
+    // The URL is already printed to the console as a fallback.
+    console.error('[seerxo] Failed to open upgrade link automatically:', error.message);
+  }
 }
 
 async function generateEtsySEO(productName, category = '') {
