@@ -46,6 +46,7 @@ Sign in with Google in your browser and approve; the CLI saves your API key auto
 seerxo-mcp configure --email your-email@example.com --api-key your-api-key
 ```
 Use this if you already have an API key and just want to write it locally.
+API key format must be `keyId.secret`, and the secret part must be at least 16 characters.
 
 ### Sample CLI session
 
@@ -110,7 +111,7 @@ Tags: boho wall art, line art prints, minimalist decor, ...
       "command": "seerxo-mcp",
       "env": {
         "SEERXO_EMAIL": "your-email@example.com",
-        "SEERXO_API_KEY": "your-api-key"
+        "SEERXO_API_KEY": "keyId.secret"
       }
     }
   }

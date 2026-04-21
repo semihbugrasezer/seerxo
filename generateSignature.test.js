@@ -1,48 +1,49 @@
-import { jest } from '@jest/globals';
+import test, { afterEach, beforeEach, mock } from 'node:test';
+import assert from 'node:assert/strict';
 import { generateSignature, setRuntimeConfig } from './mcp-server.js';
 import crypto from 'node:crypto';
 
-describe('generateSignature', () => {
-  beforeEach(() => {
-    jest.useFakeTimers();
-    jest.setSystemTime(new Date('2024-01-01T00:00:00.000Z'));
-  });
+const FIXED_DATE = new Date('2024-01-01T00:00:00.000Z');
+let dateNowMock;
 
-  afterEach(() => {
-    jest.useRealTimers();
-  });
+beforeEach(() => {
+  dateNowMock = mock.method(Date, 'now', () => FIXED_DATE.getTime());
+});
 
-  it('should generate signature correctly', () => {
-    setRuntimeConfig({ apiKey: 'someKeyId.someSecretKey' });
-    const payload = { test: 'data' };
+afterEach(() => {
+  dateNowMock?.mock?.restore();
+});
 
-    const { signature, timestamp } = generateSignature(payload);
+test('generateSignature generates signature correctly', () => {
+  setRuntimeConfig({ apiKey: 'someKeyId.someSecretKey123' });
+  const payload = { test: 'data' };
 
-    const expectedTimestamp = Date.now().toString();
-    const message = JSON.stringify(payload) + expectedTimestamp;
-    const expectedSignature = crypto
-      .createHmac('sha256', 'someSecretKey')
-      .update(message)
-      .digest('hex');
+  const { signature, timestamp } = generateSignature(payload);
 
-    expect(timestamp).toBe(expectedTimestamp);
-    expect(signature).toBe(expectedSignature);
-  });
+  const expectedTimestamp = Date.now().toString();
+  const message = JSON.stringify(payload) + expectedTimestamp;
+  const expectedSignature = crypto
+    .createHmac('sha256', 'someSecretKey123')
+    .update(message)
+    .digest('hex');
 
-  it('should handle missing apiKeySecret', () => {
-    setRuntimeConfig({ apiKey: 'invalid_format' });
-    const payload = { test: 'data' };
+  assert.strictEqual(timestamp, expectedTimestamp);
+  assert.strictEqual(signature, expectedSignature);
+});
 
-    const { signature, timestamp } = generateSignature(payload);
+test('generateSignature falls back to empty secret for invalid api keys', () => {
+  setRuntimeConfig({ apiKey: 'valid.key' });
+  const payload = { test: 'data' };
 
-    const expectedTimestamp = Date.now().toString();
-    const message = JSON.stringify(payload) + expectedTimestamp;
-    const expectedSignature = crypto
-      .createHmac('sha256', '')
-      .update(message)
-      .digest('hex');
+  const { signature, timestamp } = generateSignature(payload);
 
-    expect(timestamp).toBe(expectedTimestamp);
-    expect(signature).toBe(expectedSignature);
-  });
+  const expectedTimestamp = Date.now().toString();
+  const message = JSON.stringify(payload) + expectedTimestamp;
+  const expectedSignature = crypto
+    .createHmac('sha256', '')
+    .update(message)
+    .digest('hex');
+
+  assert.strictEqual(timestamp, expectedTimestamp);
+  assert.strictEqual(signature, expectedSignature);
 });

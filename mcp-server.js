@@ -23,6 +23,7 @@ const clientVersion = process.env.SEERXO_CLIENT_VERSION || pkg.version;
 const LOGIN_POLL_INTERVAL_MS = 4000;
 const LOGIN_TIMEOUT_MS = 15 * 60 * 1000;
 const isInteractiveSession = process.stdin.isTTY;
+const MIN_API_KEY_SECRET_LENGTH = 16;
 
 const loadLocalConfigAsync = async () => {
   try {
@@ -41,6 +42,32 @@ let apiKeyParts = [];
 let hasValidApiKey = false;
 let apiKeySecret = null;
 let apiKeyHeader = null;
+
+function resolveApiKeyState(rawValue) {
+  const value = typeof rawValue === 'string' ? rawValue.trim() : '';
+  const parts = value ? value.split('.') : [];
+  const [keyId = '', secret = ''] = parts;
+  const isValid =
+    parts.length === 2 &&
+    Boolean(keyId) &&
+    Boolean(secret) &&
+    secret.length >= MIN_API_KEY_SECRET_LENGTH;
+
+  return {
+    parts,
+    isValid,
+    secret: isValid ? secret : null,
+    header: isValid ? value : null,
+  };
+}
+
+function syncApiKeyState() {
+  const state = resolveApiKeyState(rawApiKey);
+  apiKeyParts = state.parts;
+  hasValidApiKey = state.isValid;
+  apiKeySecret = state.secret;
+  apiKeyHeader = state.header;
+}
 
 async function initConfig() {
   localConfig = await loadLocalConfigAsync();
@@ -64,10 +91,7 @@ async function initConfig() {
       DEFAULT_HOST
   );
 
-  apiKeyParts = rawApiKey ? rawApiKey.split('.') : [];
-  hasValidApiKey = apiKeyParts.length === 2 && apiKeyParts.every(Boolean);
-  apiKeySecret = hasValidApiKey ? apiKeyParts[1] : null;
-  apiKeyHeader = hasValidApiKey ? rawApiKey : null;
+  syncApiKeyState();
 }
 
 const args = process.argv.slice(2);
@@ -91,10 +115,7 @@ export function setRuntimeConfig({ email, apiKey, host }) {
   if (apiKey) rawApiKey = apiKey;
   if (host) apiHost = normalizeHost(host);
 
-  apiKeyParts = rawApiKey ? rawApiKey.split('.') : [];
-  hasValidApiKey = apiKeyParts.length === 2 && apiKeyParts.every(Boolean);
-  apiKeySecret = hasValidApiKey ? apiKeyParts[1] : null;
-  apiKeyHeader = hasValidApiKey ? rawApiKey : null;
+  syncApiKeyState();
 }
 
 const getApiEndpoint = () => `${apiHost}/mcp/generate`;
@@ -247,8 +268,10 @@ const runConfigureCommand = async (extraArgs = [], options = {}) => {
     process.exit(1);
   }
 
-  if (!apiKey || apiKey.split('.').length !== 2) {
-    console.error('API key must be in the format "keyId.secret".');
+  if (!resolveApiKeyState(apiKey).isValid) {
+    console.error(
+      `API key must be in the format "keyId.secret" and the secret part must be at least ${MIN_API_KEY_SECRET_LENGTH} characters.`
+    );
     process.exit(1);
   }
 
@@ -554,7 +577,7 @@ async function startInteractiveShell() {
           chalk.bold('Status:') +
           '\n' +
           `  Email : ${userEmail || chalk.red('missing')}\n` +
-          `  Key   : ${hasValidApiKey ? '✔ configured' : '✖ missing'}\n`
+          `  Key   : ${hasValidApiKey ? '✔ configured' : `✖ missing or invalid (expected keyId.secret with secret >= ${MIN_API_KEY_SECRET_LENGTH} chars)`}\n`
       );
       continue;
     }

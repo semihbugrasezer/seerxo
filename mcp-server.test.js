@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import test from 'node:test';
+import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -6,36 +7,50 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const cliPath = path.join(__dirname, 'mcp-server.js');
 
-describe('mcp-server CLI', () => {
-  it('should print version with --version', () => {
-    const output = execFileSync('node', [cliPath, '--version'], { encoding: 'utf8' });
-    expect(output.trim()).toMatch(/^\d+\.\d+\.\d+$/);
+test('mcp-server prints version with --version', () => {
+  const output = execFileSync('node', [cliPath, '--version'], {
+    encoding: 'utf8',
+    env: { ...process.env, NODE_ENV: 'cli-test' },
   });
+  assert.match(output.trim(), /^\d+\.\d+\.\d+$/);
+});
 
-  it('should print help with --help', () => {
-    const output = execFileSync('node', [cliPath, '--help'], { encoding: 'utf8' });
-    expect(output).toContain('Commands:');
-    expect(output).toContain('seerxo login');
-    expect(output).toContain('seerxo generate');
+test('mcp-server prints help with --help', () => {
+  const output = execFileSync('node', [cliPath, '--help'], {
+    encoding: 'utf8',
+    env: { ...process.env, NODE_ENV: 'cli-test' },
   });
+  assert.match(output, /Commands:/);
+  assert.match(output, /seerxo login/);
+  assert.match(output, /seerxo generate/);
+});
 
-  it('should require arguments for generate', () => {
-    expect.assertions(2);
-    try {
-      execFileSync('node', [cliPath, 'generate'], { encoding: 'utf8' });
-    } catch (err) {
-      expect(err.status).toBe(1);
-      expect(err.stderr).toContain('Missing argument: --product "Product name"');
+test('mcp-server requires arguments for generate', () => {
+  assert.throws(
+    () => execFileSync('node', [cliPath, 'generate'], {
+      encoding: 'utf8',
+      stdio: 'pipe',
+      env: { ...process.env, NODE_ENV: 'cli-test' },
+    }),
+    (err) => {
+      assert.strictEqual(err.status, 1);
+      assert.match(err.stderr, /Missing argument: --product "Product name"/);
+      return true;
     }
-  });
+  );
+});
 
-  it('should print error for unknown commands', () => {
-    expect.assertions(2);
-    try {
-      execFileSync('node', [cliPath, 'unknown-command'], { encoding: 'utf8' });
-    } catch (err) {
-      expect(err.status).toBe(1);
-      expect(err.stderr).toContain('Unknown command: unknown-command');
+test('mcp-server prints error for unknown commands', () => {
+  assert.throws(
+    () => execFileSync('node', [cliPath, 'unknown-command'], {
+      encoding: 'utf8',
+      stdio: 'pipe',
+      env: { ...process.env, NODE_ENV: 'cli-test' },
+    }),
+    (err) => {
+      assert.strictEqual(err.status, 1);
+      assert.match(err.stderr, /Unknown command: unknown-command/);
+      return true;
     }
-  });
+  );
 });
