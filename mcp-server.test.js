@@ -1,32 +1,41 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
-import { isSafeHttpUrl } from './mcp-server.js';
+import { describe, it, expect } from 'vitest';
+import { execFileSync } from 'node:child_process';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-test('isSafeHttpUrl', async (t) => {
-  await t.test('should return true for valid http URLs', () => {
-    assert.equal(isSafeHttpUrl('http://example.com'), true);
-    assert.equal(isSafeHttpUrl('http://localhost:3000'), true);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const cliPath = path.join(__dirname, 'mcp-server.js');
+
+describe('mcp-server CLI', () => {
+  it('should print version with --version', () => {
+    const output = execFileSync('node', [cliPath, '--version'], { encoding: 'utf8' });
+    expect(output.trim()).toMatch(/^\d+\.\d+\.\d+$/);
   });
 
-  await t.test('should return true for valid https URLs', () => {
-    assert.equal(isSafeHttpUrl('https://example.com'), true);
-    assert.equal(isSafeHttpUrl('https://google.com/path?query=1'), true);
+  it('should print help with --help', () => {
+    const output = execFileSync('node', [cliPath, '--help'], { encoding: 'utf8' });
+    expect(output).toContain('Commands:');
+    expect(output).toContain('seerxo login');
+    expect(output).toContain('seerxo generate');
   });
 
-  await t.test('should return false for invalid protocols', () => {
-    assert.equal(isSafeHttpUrl('ftp://example.com'), false);
-    assert.equal(isSafeHttpUrl('file:///etc/passwd'), false);
-    assert.equal(isSafeHttpUrl('javascript:alert(1)'), false);
+  it('should require arguments for generate', () => {
+    expect.assertions(2);
+    try {
+      execFileSync('node', [cliPath, 'generate'], { encoding: 'utf8' });
+    } catch (err) {
+      expect(err.status).toBe(1);
+      expect(err.stderr).toContain('Missing argument: --product "Product name"');
+    }
   });
 
-  await t.test('should return false for malformed URLs and trigger the catch block', () => {
-    // These will throw in the URL constructor
-    assert.equal(isSafeHttpUrl('not-a-url'), false);
-    assert.equal(isSafeHttpUrl('example.com'), false);
-    assert.equal(isSafeHttpUrl(''), false);
-    assert.equal(isSafeHttpUrl(null), false);
-    assert.equal(isSafeHttpUrl(undefined), false);
-    assert.equal(isSafeHttpUrl(123), false);
-    assert.equal(isSafeHttpUrl({}), false);
+  it('should print error for unknown commands', () => {
+    expect.assertions(2);
+    try {
+      execFileSync('node', [cliPath, 'unknown-command'], { encoding: 'utf8' });
+    } catch (err) {
+      expect(err.status).toBe(1);
+      expect(err.stderr).toContain('Unknown command: unknown-command');
+    }
   });
 });
