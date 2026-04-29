@@ -7,7 +7,7 @@ import path from 'node:path';
 import readline from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { createRequire } from 'node:module';
-import { execSync, spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import boxen from 'boxen';
 import chalk from 'chalk';
 import open from 'open';
@@ -401,16 +401,16 @@ const runSelfUpdate = () => {
   const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
   let prefix = '';
   try {
-    prefix = execSync(`${npmCmd} config get prefix`).toString().trim();
+    prefix = execFileSync(npmCmd, ['config', 'get', 'prefix']).toString().trim();
   } catch {
     prefix = '';
   }
   try {
-    const prefixArg = prefix ? ` --prefix "${prefix}"` : '';
-    execSync(
-      `${npmCmd} install -g seerxo@latest --force${prefixArg}`,
-      { stdio: 'inherit' }
-    );
+    const installArgs = ['install', '-g', 'seerxo@latest', '--force'];
+    if (prefix) {
+      installArgs.push('--prefix', prefix);
+    }
+    execFileSync(npmCmd, installArgs, { stdio: 'inherit' });
     console.log('Update complete. Run "seerxo --version" to verify.');
   } catch (error) {
     console.error('Update failed.');
