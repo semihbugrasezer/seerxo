@@ -698,10 +698,7 @@ async function generateEtsySEO(productName, category = '') {
   }
 }
 
-async function startInteractiveShell() {
-  clearCliScreen();
-  printCliBanner();
-
+async function promptLoginIfNecessary() {
   if (!userEmail || !hasValidApiKey) {
     const rlLogin = readline.createInterface({ input, output });
     const answer = (
@@ -725,6 +722,42 @@ async function startInteractiveShell() {
       );
     }
   }
+}
+
+function printSeoResult(productName, result) {
+  console.log(
+    boxen(
+      [
+        chalk.bold(`✅ Etsy SEO for "${productName}"`),
+        result.usage ? renderQuotaPanel(result.usage, { title: 'Credits', compact: true }) : '',
+        '',
+        chalk.bold('Title:'),
+        result.title,
+        '',
+        chalk.bold('Description:'),
+        result.description,
+        '',
+        chalk.bold('Tags:'),
+        result.tags.join(', '),
+        '',
+        chalk.bold('Suggested Price:'),
+        result.suggested_price_range,
+      ].join('\n'),
+      {
+        padding: 1,
+        borderColor: 'cyan',
+        borderStyle: 'round',
+        title: 'seerxo',
+      }
+    )
+  );
+}
+
+async function startInteractiveShell() {
+  clearCliScreen();
+  printCliBanner();
+
+  await promptLoginIfNecessary();
 
   const promptLabel =
     chalk.gray('[') +
@@ -820,32 +853,7 @@ async function startInteractiveShell() {
         }
       try {
         const result = await generateEtsySEO(productName, category);
-        console.log(
-          boxen(
-            [
-              chalk.bold(`✅ Etsy SEO for "${productName}"`),
-              result.usage ? renderQuotaPanel(result.usage, { title: 'Credits', compact: true }) : '',
-              '',
-                chalk.bold('Title:'),
-                result.title,
-                '',
-                chalk.bold('Description:'),
-                result.description,
-                '',
-                chalk.bold('Tags:'),
-                result.tags.join(', '),
-                '',
-                chalk.bold('Suggested Price:'),
-                result.suggested_price_range,
-              ].join('\n'),
-              {
-                padding: 1,
-                borderColor: 'cyan',
-                borderStyle: 'round',
-                title: 'seerxo',
-              }
-            )
-          );
+        printSeoResult(productName, result);
         } catch (error) {
           console.error(
             chalk.red(
@@ -867,32 +875,7 @@ async function startInteractiveShell() {
 
       try {
         const result = await generateEtsySEO(productName, category);
-        console.log(
-          boxen(
-            [
-              chalk.bold(`✅ Etsy SEO for "${productName}"`),
-              result.usage ? renderQuotaPanel(result.usage, { title: 'Credits', compact: true }) : '',
-              '',
-              chalk.bold('Title:'),
-              result.title,
-              '',
-              chalk.bold('Description:'),
-              result.description,
-              '',
-              chalk.bold('Tags:'),
-              result.tags.join(', '),
-              '',
-              chalk.bold('Suggested Price:'),
-              result.suggested_price_range,
-            ].join('\n'),
-            {
-              padding: 1,
-              borderColor: 'cyan',
-              borderStyle: 'round',
-              title: 'seerxo',
-            }
-          )
-        );
+        printSeoResult(productName, result);
       } catch (error) {
         const message =
           error?.payload?.message ||
