@@ -632,69 +632,80 @@ async function generateEtsySEO(productName, category = '') {
 
   const cacheKey = `${productName.trim().toLowerCase()}|${(category || '').trim().toLowerCase()}`;
   if (seoCache.has(cacheKey)) {
-    return seoCache.get(cacheKey);
+    return await seoCache.get(cacheKey);
   }
 
-  try {
-    const payload = {
-      product_name: productName,
-      category: category || '',
-      email: userEmail,
-    };
-
-    const { signature, timestamp } = generateSignature(payload);
-
-    const response = await fetch(getApiEndpoint(), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': `seerxo/${clientVersion}`,
-        'X-MCP-Signature': signature,
-        'X-MCP-Timestamp': timestamp.toString(),
-        'X-MCP-Version': clientVersion,
-        'X-MCP-API-Key': apiKeyHeader,
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      const rawMessage =
-        data?.error || data?.message || `API error: ${response.status}`;
-      const message = formatApiErrorMessage(rawMessage, response.status);
+  const promise = (async () => {
+    try {
       const payload = {
-        message,
-        status: response.status,
-        paymentLink: data?.upgrade?.paymentLink || data?.paymentLink || null,
+        product_name: productName,
+        category: category || '',
+        email: userEmail,
       };
-      const error = new Error(message);
-      error.payload = payload;
-      error.status = response.status;
-      throw error;
-    }
 
-    if (!data.success) {
-      const message = data.error || 'Content generation failed';
-      const error = new Error(message);
-      error.payload = {
-        message,
+      const { signature, timestamp } = generateSignature(payload);
+
+      const response = await fetch(getApiEndpoint(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': `seerxo/${clientVersion}`,
+          'X-MCP-Signature': signature,
+          'X-MCP-Timestamp': timestamp.toString(),
+          'X-MCP-Version': clientVersion,
+          'X-MCP-API-Key': apiKeyHeader,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        const rawMessage =
+          data?.error || data?.message || `API error: ${response.status}`;
+        const message = formatApiErrorMessage(rawMessage, response.status);
+        const payload = {
+          message,
+          status: response.status,
+          paymentLink: data?.upgrade?.paymentLink || data?.paymentLink || null,
+        };
+        const error = new Error(message);
+        error.payload = payload;
+        error.status = response.status;
+        throw error;
+      }
+
+      if (!data.success) {
+        const message = data.error || 'Content generation failed';
+        const error = new Error(message);
+        error.payload = {
+          message,
+        };
+        throw error;
+      }
+
+      const result = {
+        ...data.data,
+        usage: data.usage,
       };
-      throw error;
+
+      return result;
+    } catch (error) {
+      seoCache.delete(cacheKey);
+      throw new Error(error.message || 'Failed to generate Etsy SEO content', {
+        cause: error,
+      });
     }
+  })();
 
-    const result = {
-      ...data.data,
-      usage: data.usage,
-    };
+  seoCache.set(cacheKey, promise);
 
+  try {
+    const result = await promise;
     seoCache.set(cacheKey, result);
-
     return result;
   } catch (error) {
-    throw new Error(error.message || 'Failed to generate Etsy SEO content', {
-      cause: error,
-    });
+    throw error;
   }
 }
 
