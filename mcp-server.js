@@ -129,7 +129,7 @@ function clearCliScreen() {
 
 const getQuotaEndpoint = () => `${apiHost}/mcp/quota`;
 
-function buildQuotaSummary(usage = {}) {
+export function buildQuotaSummary(usage = {}) {
   const limitRaw = usage.limit;
   const remainingRaw = usage.remaining;
   const usedRaw = usage.current ?? usage.used;
