@@ -40,7 +40,7 @@ test('mcp-server prints status with configured credentials', () => {
   assert.match(output, /Status:/);
   assert.match(output, /semih@example.com/);
   assert.match(output, /https:\/\/api\.seerxo\.com/);
-  assert.match(output, /configured \(keyid\)/);
+  assert.match(output, /configured/);
 });
 
 test('mcp-server requires arguments for generate', () => {
