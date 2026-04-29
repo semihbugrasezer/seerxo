@@ -37,6 +37,7 @@ const LOGIN_POLL_INTERVAL_MS = 4000;
 const LOGIN_TIMEOUT_MS = 15 * 60 * 1000;
 const isInteractiveSession = process.stdin.isTTY;
 const MIN_API_KEY_SECRET_LENGTH = 16;
+const UNEXPECTED_TOKEN_REGEX = /Unexpected token/;
 
 const loadLocalConfigAsync = async () => {
   try {
@@ -1139,7 +1140,7 @@ function startMcpServer() {
       } catch (error) {
         if (
           error instanceof SyntaxError ||
-          /Unexpected token/.test(error.message || '')
+          UNEXPECTED_TOKEN_REGEX.test(error.message || '')
         ) {
           console.error(
             '[seerxo] Invalid JSON received, ignoring.'
