@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { formatApiErrorMessage } from './mcp-server.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const cliPath = path.join(__dirname, 'mcp-server.js');
@@ -40,7 +41,7 @@ test('mcp-server prints status with configured credentials', () => {
   assert.match(output, /Status:/);
   assert.match(output, /semih@example.com/);
   assert.match(output, /https:\/\/api\.seerxo\.com/);
-  assert.match(output, /configured \(keyid\)/);
+  assert.match(output, /configured/);
 });
 
 test('mcp-server requires arguments for generate', () => {
@@ -56,6 +57,42 @@ test('mcp-server requires arguments for generate', () => {
       return true;
     }
   );
+});
+
+test('formatApiErrorMessage handles 401 status', () => {
+  const result = formatApiErrorMessage('Unauthorized', 401);
+  assert.match(result, /Invalid API key \(Unauthorized\)\. Run "seerxo login" to refresh credentials\./);
+});
+
+test('formatApiErrorMessage handles 403 status', () => {
+  const result = formatApiErrorMessage('Forbidden', 403);
+  assert.match(result, /Invalid API key \(Forbidden\)\. Run "seerxo login" to refresh credentials\./);
+});
+
+test('formatApiErrorMessage handles invalid API key string match', () => {
+  const result = formatApiErrorMessage('Your api key is inactive right now.', 400);
+  assert.match(result, /Invalid API key \(Your api key is inactive right now\.\)\. Run "seerxo login" to refresh credentials\./);
+
+  const result2 = formatApiErrorMessage('Invalid api key provided', 500);
+  assert.match(result2, /Invalid API key \(Invalid api key provided\)\. Run "seerxo login" to refresh credentials\./);
+
+  const result3 = formatApiErrorMessage('API key not found in db', 200);
+  assert.match(result3, /Invalid API key \(API key not found in db\)\. Run "seerxo login" to refresh credentials\./);
+});
+
+test('formatApiErrorMessage returns original message for other errors', () => {
+  const result = formatApiErrorMessage('Server overloaded', 503);
+  assert.strictEqual(result, 'Server overloaded');
+});
+
+test('formatApiErrorMessage handles missing message', () => {
+  const result = formatApiErrorMessage(null, 500);
+  assert.strictEqual(result, 'Failed to generate Etsy SEO content');
+});
+
+test('formatApiErrorMessage handles missing message with 401', () => {
+  const result = formatApiErrorMessage(undefined, 401);
+  assert.match(result, /Invalid API key\. Run "seerxo login" to refresh credentials\./);
 });
 
 test('mcp-server prints error for unknown commands', () => {

@@ -225,7 +225,7 @@ async function printStatusWithQuota() {
   }
 }
 
-function formatApiErrorMessage(message, status) {
+export function formatApiErrorMessage(message, status) {
   const normalizedMessage = typeof message === 'string' ? message : '';
   const looksLikeInvalidKey =
     status === 401 ||
