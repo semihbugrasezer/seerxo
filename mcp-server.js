@@ -626,12 +626,13 @@ async function generateEtsySEO(productName, category = '') {
     return seoCache.get(cacheKey);
   }
 
-  try {
-    const payload = {
-      product_name: productName,
-      category: category || '',
-      email: userEmail,
-    };
+  const fetchPromise = (async () => {
+    try {
+      const payload = {
+        product_name: productName,
+        category: category || '',
+        email: userEmail,
+      };
 
     const { signature, timestamp } = generateSignature(payload);
 
@@ -674,19 +675,22 @@ async function generateEtsySEO(productName, category = '') {
       throw error;
     }
 
-    const result = {
-      ...data.data,
-      usage: data.usage,
-    };
+      const result = {
+        ...data.data,
+        usage: data.usage,
+      };
 
-    seoCache.set(cacheKey, result);
+      return result;
+    } catch (error) {
+      seoCache.delete(cacheKey);
+      throw new Error(error.message || 'Failed to generate Etsy SEO content', {
+        cause: error,
+      });
+    }
+  })();
 
-    return result;
-  } catch (error) {
-    throw new Error(error.message || 'Failed to generate Etsy SEO content', {
-      cause: error,
-    });
-  }
+  seoCache.set(cacheKey, fetchPromise);
+  return fetchPromise;
 }
 
 async function startInteractiveShell() {
