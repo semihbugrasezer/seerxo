@@ -48,6 +48,15 @@ const loadLocalConfigAsync = async () => {
   }
 };
 
+const saveLocalConfigAsync = async (configData) => {
+  await fsPromises.mkdir(CONFIG_DIR, { recursive: true, mode: 0o700 });
+  await fsPromises.writeFile(
+    CONFIG_PATH,
+    JSON.stringify(configData, null, 2),
+    { encoding: 'utf8', mode: 0o600 }
+  );
+};
+
 let localConfig = {};
 let userEmail = null;
 let rawApiKey = null;
@@ -459,12 +468,7 @@ const runConfigureCommand = async (extraArgs = [], options = {}) => {
     process.exit(1);
   }
 
-  await fsPromises.mkdir(CONFIG_DIR, { recursive: true, mode: 0o700 });
-  await fsPromises.writeFile(
-    CONFIG_PATH,
-    JSON.stringify({ email, apiKey, host }, null, 2),
-    { encoding: 'utf8', mode: 0o600 }
-  );
+  await saveLocalConfigAsync({ email, apiKey, host });
 
   setRuntimeConfig({ email, apiKey, host });
 
@@ -483,12 +487,7 @@ const runLogoutCommand = async () => {
     host = normalizeHost(existing.host || host);
   } catch {}
 
-  await fsPromises.mkdir(CONFIG_DIR, { recursive: true, mode: 0o700 });
-  await fsPromises.writeFile(
-    CONFIG_PATH,
-    JSON.stringify({ host }, null, 2),
-    { encoding: 'utf8', mode: 0o600 }
-  );
+  await saveLocalConfigAsync({ host });
 
   setRuntimeConfig({
     email: null,
@@ -559,20 +558,11 @@ const runLoginCommand = async (extraArgs = [], options = {}) => {
 
       if (poll.status === 'approved' && poll.apiKey) {
         const resolvedHost = poll.host ? normalizeHost(poll.host) : host;
-        await fsPromises.mkdir(CONFIG_DIR, { recursive: true, mode: 0o700 });
-        await fsPromises.writeFile(
-          CONFIG_PATH,
-          JSON.stringify(
-            {
-              email: poll.email || email,
-              apiKey: poll.apiKey,
-              host: resolvedHost,
-            },
-            null,
-            2
-          ),
-          { encoding: 'utf8', mode: 0o600 }
-        );
+        await saveLocalConfigAsync({
+          email: poll.email || email,
+          apiKey: poll.apiKey,
+          host: resolvedHost,
+        });
 
         setRuntimeConfig({
           email: poll.email || email,
