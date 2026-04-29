@@ -1019,6 +1019,143 @@ async function handleCli(subArgs) {
   process.exit(1);
 }
 
+function handleMcpInitialize(request) {
+  if (request.params?.initializationOptions?.email) {
+    userEmail = request.params.initializationOptions.email;
+  }
+
+  if (!userEmail) {
+    throw new Error('SEERXO_EMAIL is required. Run "seerxo configure".');
+  }
+  if (!apiKeyHeader) {
+    throw new Error('SEERXO_API_KEY is required. Run "seerxo configure".');
+  }
+
+  const response = {
+    jsonrpc: '2.0',
+    id: request.id,
+    result: {
+      protocolVersion: '2024-11-05',
+      capabilities: {
+        tools: {},
+      },
+      serverInfo: {
+        name: 'seerxo',
+        version: clientVersion,
+      },
+    },
+  };
+
+  console.log(JSON.stringify(response));
+}
+
+function handleMcpToolsList(request) {
+  const response = {
+    jsonrpc: '2.0',
+    id: request.id,
+    result: {
+      tools: [
+        {
+          name: 'generate_etsy_seo',
+          description: 'Generate SEO-optimized Etsy product listings.',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              product_name: {
+                type: 'string',
+                description: 'Name of the product to optimize.',
+              },
+              category: {
+                type: 'string',
+                description: 'Optional category (e.g., "Home & Living")',
+              },
+            },
+            required: ['product_name'],
+          },
+        },
+      ],
+    },
+  };
+
+  console.log(JSON.stringify(response));
+}
+
+async function handleMcpToolsCall(request) {
+  const { name, arguments: toolArgs } = request.params;
+
+  if (name === 'generate_etsy_seo') {
+    const result = await generateEtsySEO(
+      toolArgs.product_name,
+      toolArgs.category || ''
+    );
+
+    const usageInfo = result.usage
+      ? (() => {
+          const summary = buildQuotaSummary(result.usage);
+          return `\n\n---\n**Credits:** ${summary.headline} (${summary.detail})`;
+        })()
+      : '';
+
+    const response = {
+      jsonrpc: '2.0',
+      id: request.id,
+      result: {
+        content: [
+          {
+            type: 'text',
+            text: `# Etsy SEO Results for "${toolArgs.product_name}"\n\n## 📝 SEO Title\n${result.title}\n\n## 📄 Product Description\n${result.description}\n\n## 🏷️ Tags (15)\n${result.tags.join(
+              ', '
+            )}\n\n## 💰 Suggested Price\n${
+              result.suggested_price_range
+            }${usageInfo}`,
+          },
+        ],
+      },
+    };
+
+    console.log(JSON.stringify(response));
+  } else {
+    throw new Error(`Unknown tool: ${name}`);
+  }
+}
+
+async function handleMcpRequest(request) {
+  if (request.method === 'initialize') {
+    handleMcpInitialize(request);
+  } else if (request.method === 'tools/list') {
+    handleMcpToolsList(request);
+  } else if (request.method === 'tools/call') {
+    await handleMcpToolsCall(request);
+  }
+}
+
+async function processMcpLine(line) {
+  if (!line.trim()) return;
+
+  try {
+    const request = JSON.parse(line);
+    await handleMcpRequest(request);
+  } catch (error) {
+    if (
+      error instanceof SyntaxError ||
+      /Unexpected token/.test(error.message || '')
+    ) {
+      console.error('[seerxo] Invalid JSON received, ignoring.');
+      return;
+    }
+    const errorResponse = {
+      jsonrpc: '2.0',
+      id: null,
+      error: {
+        code: -32603,
+        message: error.message,
+      },
+    };
+
+    console.log(JSON.stringify(errorResponse));
+  }
+}
+
 function startMcpServer() {
   if (!userEmail || !hasValidApiKey) {
     console.error(
@@ -1036,127 +1173,7 @@ function startMcpServer() {
     buffer = lines.pop() || '';
 
     for (const line of lines) {
-      if (!line.trim()) continue;
-
-      try {
-        const request = JSON.parse(line);
-
-        if (request.method === 'initialize') {
-          if (request.params?.initializationOptions?.email) {
-            userEmail = request.params.initializationOptions.email;
-          }
-
-          if (!userEmail) {
-            throw new Error('SEERXO_EMAIL is required. Run "seerxo configure".');
-          }
-          if (!apiKeyHeader) {
-            throw new Error('SEERXO_API_KEY is required. Run "seerxo configure".');
-          }
-
-          const response = {
-            jsonrpc: '2.0',
-            id: request.id,
-            result: {
-              protocolVersion: '2024-11-05',
-              capabilities: {
-                tools: {},
-              },
-              serverInfo: {
-                name: 'seerxo',
-                version: clientVersion,
-              },
-            },
-          };
-
-          console.log(JSON.stringify(response));
-        } else if (request.method === 'tools/list') {
-          const response = {
-            jsonrpc: '2.0',
-            id: request.id,
-            result: {
-              tools: [
-                {
-                  name: 'generate_etsy_seo',
-                  description: 'Generate SEO-optimized Etsy product listings.',
-                  inputSchema: {
-                    type: 'object',
-                    properties: {
-                      product_name: {
-                        type: 'string',
-                        description: 'Name of the product to optimize.',
-                      },
-                      category: {
-                        type: 'string',
-                        description: 'Optional category (e.g., "Home & Living")',
-                      },
-                    },
-                    required: ['product_name'],
-                  },
-                },
-              ],
-            },
-          };
-
-          console.log(JSON.stringify(response));
-        } else if (request.method === 'tools/call') {
-          const { name, arguments: toolArgs } = request.params;
-
-          if (name === 'generate_etsy_seo') {
-            const result = await generateEtsySEO(
-              toolArgs.product_name,
-              toolArgs.category || ''
-            );
-
-            const usageInfo = result.usage
-              ? (() => {
-                  const summary = buildQuotaSummary(result.usage);
-                  return `\n\n---\n**Credits:** ${summary.headline} (${summary.detail})`;
-                })()
-              : '';
-
-            const response = {
-              jsonrpc: '2.0',
-              id: request.id,
-              result: {
-                content: [
-                  {
-                    type: 'text',
-                    text: `# Etsy SEO Results for "${toolArgs.product_name}"\n\n## 📝 SEO Title\n${result.title}\n\n## 📄 Product Description\n${result.description}\n\n## 🏷️ Tags (15)\n${result.tags.join(
-                      ', '
-                    )}\n\n## 💰 Suggested Price\n${
-                      result.suggested_price_range
-                    }${usageInfo}`,
-                  },
-                ],
-              },
-            };
-
-            console.log(JSON.stringify(response));
-          } else {
-            throw new Error(`Unknown tool: ${name}`);
-          }
-        }
-      } catch (error) {
-        if (
-          error instanceof SyntaxError ||
-          /Unexpected token/.test(error.message || '')
-        ) {
-          console.error(
-            '[seerxo] Invalid JSON received, ignoring.'
-          );
-          continue;
-        }
-        const errorResponse = {
-          jsonrpc: '2.0',
-          id: null,
-          error: {
-            code: -32603,
-            message: error.message,
-          },
-        };
-
-        console.log(JSON.stringify(errorResponse));
-      }
+      await processMcpLine(line);
     }
   });
 
