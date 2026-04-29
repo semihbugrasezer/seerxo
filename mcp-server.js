@@ -56,7 +56,7 @@ let hasValidApiKey = false;
 let apiKeySecret = null;
 let apiKeyHeader = null;
 
-function resolveApiKeyState(rawValue) {
+export function resolveApiKeyState(rawValue) {
   const value = typeof rawValue === 'string' ? rawValue.trim() : '';
   const parts = value ? value.split('.') : [];
   const [keyId = '', secret = ''] = parts;
@@ -96,7 +96,7 @@ function syncApiKeyState() {
 
 function printStatus() {
   const keyState = hasValidApiKey
-    ? '✔ configured'
+    ? `✔ configured (${apiKeyParts[0]})`
     : `✖ missing or invalid (expected keyId.secret with secret >= ${MIN_API_KEY_SECRET_LENGTH} chars)`;
 
   console.log(
