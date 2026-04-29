@@ -1,9 +1,7 @@
 #!/usr/bin/env node
 
 import crypto from 'node:crypto';
-import fs from 'node:fs';
 import { promises as fsPromises } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import os from 'node:os';
 import path from 'node:path';
 import readline from 'node:readline/promises';
