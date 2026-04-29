@@ -123,17 +123,25 @@ function buildQuotaSummary(usage = {}) {
   const limitRaw = usage.limit;
   const remainingRaw = usage.remaining;
   const usedRaw = usage.current ?? usage.used;
+
   const hasFiniteLimit = Number.isFinite(Number(limitRaw));
-  const limit = hasFiniteLimit ? Number(limitRaw) : null;
-  const remaining = Number.isFinite(Number(remainingRaw))
-    ? Math.max(0, Number(remainingRaw))
-    : null;
-  const current =
-    Number.isFinite(Number(usedRaw))
-      ? Math.max(0, Number(usedRaw))
-      : hasFiniteLimit && remaining !== null
-      ? Math.max(0, limit - remaining)
-      : 0;
+
+  let limit = null;
+  if (hasFiniteLimit) {
+    limit = Number(limitRaw);
+  }
+
+  let remaining = null;
+  if (Number.isFinite(Number(remainingRaw))) {
+    remaining = Math.max(0, Number(remainingRaw));
+  }
+
+  let current = 0;
+  if (Number.isFinite(Number(usedRaw))) {
+    current = Math.max(0, Number(usedRaw));
+  } else if (hasFiniteLimit && remaining !== null) {
+    current = Math.max(0, limit - remaining);
+  }
 
   if (hasFiniteLimit && remaining !== null) {
     return {
