@@ -106,7 +106,7 @@ function syncApiKeyState() {
 
 function printStatus() {
   const keyState = hasValidApiKey
-    ? `✔ configured (${apiKeyParts[0]})`
+    ? '✔ configured'
     : `✖ missing or invalid (expected keyId.secret with secret >= ${MIN_API_KEY_SECRET_LENGTH} chars)`;
 
   console.log(
