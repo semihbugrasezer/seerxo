@@ -2,12 +2,13 @@ name: Release
 
 on:
   push:
-    tags:
-      - "v*.*.*"
+    branches:
+      - development
 
 permissions:
   contents: write
-  id-token: write
+  issues: write
+  pull-requests: write
 
 jobs:
   release:
@@ -16,12 +17,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          registry-url: "https://registry.npmjs.org"
+          node-version: 22
+          cache: npm
 
       - name: Install dependencies
         run: npm ci
@@ -35,12 +39,7 @@ jobs:
       - name: Build project
         run: npm run build --if-present
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          generate_release_notes: true
-
-      - name: Publish to npm
-        run: npm publish --provenance --access public
+      - name: Release
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release

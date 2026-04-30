@@ -4,11 +4,11 @@ on:
   pull_request:
     branches:
       - main
-      - develop
+      - development
   push:
     branches:
       - main
-      - develop
+      - development
 
 permissions:
   contents: read
@@ -21,7 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [20, 22]
+        node-version: [22]
 
     steps:
       - name: Checkout
