@@ -312,7 +312,7 @@ export const getFlagValue = (flag, list = []) => {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const fetchJson = async (url, options = {}) => {
+export const fetchJson = async (url, options = {}) => {
   const response = await fetch(url, options);
   let data = null;
   try {
