@@ -10,7 +10,10 @@
     "seerxo": "mcp-server.js"
   },
   "scripts": {
-    "start": "node mcp-server.js"
+    "start": "node mcp-server.js",
+    "lint": "node --check mcp-server.js && node --check utils.js",
+    "test": "echo \"No tests configured yet\"",
+    "build": "echo \"No build step configured yet\""
   },
   "keywords": [
     "mcp",
@@ -49,5 +52,14 @@
     "utils.js",
     "README.md",
     "LICENSE"
-  ]
+  ],
+  "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^12.0.6",
+    "@semantic-release/npm": "^13.1.5",
+    "@semantic-release/release-notes-generator": "^14.1.0",
+    "semantic-release": "^25.0.3"
+  }
 }
