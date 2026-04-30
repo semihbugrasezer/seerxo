@@ -1,231 +1,258 @@
-# Seerxo Etsy SEO MCP / CLI
+# 🚀 Etsy SEO Generator
 
-AI-powered Etsy SEO tooling for generating optimized product titles, descriptions, tags, and price guidance from Claude Desktop, MCP clients, or the terminal.
+<div align="center">
 
-This repository contains the public CLI/MCP package for Seerxo. It is designed for Etsy sellers and creators who want fast listing drafts while keeping authentication, API key handling, and package distribution simple.
+[![MCP](https://img.shields.io/badge/MCP-Compatible-blue)](https://modelcontextprotocol.io)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub](https://img.shields.io/github/stars/semihbugrasezer/etsy-seo-mcp?style=social)](https://github.com/semihbugrasezer/etsy-seo-mcp)
 
-## Features
+**AI-powered Etsy product listing generator for Claude Desktop**
 
-- Claude Desktop compatible MCP server.
-- Interactive CLI for Etsy listing generation.
-- Google-assisted login flow through the Seerxo backend.
-- Manual API key configuration for local or scripted usage.
-- HMAC-signed API requests using `keyId.secret` credentials.
-- Quota display and upgrade-aware error messages.
-- Safe host normalization and local config handling.
+Generate perfect SEO titles, descriptions, and tags in seconds
 
-## Installation
+[Live Demo](https://www.seerxo.com) • [Quick Start](#-quick-start) • [Examples](#-examples)
 
+</div>
+
+---
+
+## 🎯 What is this?
+
+A Claude Desktop integration that generates complete, SEO-optimized Etsy product listings instantly. Perfect for Etsy sellers who want to:
+
+- ✅ Save 3+ hours per product listing
+- ✅ Rank higher in Etsy search results
+- ✅ Write compelling product descriptions
+- ✅ Never run out of creative tag ideas
+
+## ⚡ Quick Start
+
+### A) CLI-only
+
+1) Install and launch
 ```bash
 npm install -g seerxo
-```
-
-Requirements:
-
-- Node.js 18 or newer.
-- npm 9 or newer.
-- A Seerxo account and API key.
-
-## CLI Usage
-
-Start the interactive CLI:
-
-```bash
 seerxo
 ```
 
-Sign in:
-
+2) Sign in (recommended)
 ```bash
-seerxo login
+seerxo-mcp login
 ```
+Sign in with Google in your browser and approve; the CLI saves your API key automatically (no manual envs needed).
 
-Generate from the command line:
-
+3) Manual setup (optional)
 ```bash
-seerxo generate --product "handmade ceramic coffee mug" --category "Home & Living"
+seerxo-mcp configure --email your-email@example.com --api-key your-api-key
+```
+Use this if you already have an API key and just want to write it locally.
+API key format must be `keyId.secret`, and the secret part must be at least 16 characters.
+
+### Sample CLI session
+
+```
+╭─────────────────────────────── SEERXO ────────────────────────────────╮
+│                                                                       │
+│  SEERXO • Etsy SEO Agent • v1.2.53                                    │
+│  Describe your Etsy product → get title, description & tags.          │
+│                                                                       │
+│  🧪 Interactive mode (help for all commands)                          │
+│  • Type a short description of your product                           │
+│  • Add a category with "|" (pipe) if you want                         │
+│    Boho bedroom wall art set | Wall Art                               │
+│                                                                       │
+│  💡 Tip                                                               │
+│    Minimalist nursery wall art in black & white line art.             │
+│    Set of 3 abstract line art prints | Wall Art                       │
+│                                                                       │
+│  Quick commands                                                       │
+│  help       Show commands                                             │
+│  status     Show config & key state                                   │
+│  login      Open approval link to sign in                             │
+│  configure  Set email & API key                                       │
+│  generate   Guided prompt (product/category)                          │
+│  quit       Exit interactive mode                                     │
+│                                                                       │
+╰───────────────────────────────────────────────────────────────────────╯
+
+[seerxo] › login
+Requesting SEERXO CLI login...
+
+Open this link in your browser to approve CLI login:
+
+https://api.seerxo.com/auth/google?redirect=...  # (browser opens to approve)
+
+Waiting for approval...
+
+Login approved. Credentials saved locally.
+You can now run "seerxo-mcp" in Claude Desktop.
+[seerxo] › generate
+Product: boho wall art
+Category (optional): Wall Art
+Title: Boho Wall Art Set of 3 | Minimalist Line Art Prints
+Description: ...
+Tags: boho wall art, line art prints, minimalist decor, ...
+[seerxo] ›
 ```
 
-Check quota:
+### B) Claude Desktop + MCP
 
-```bash
-seerxo quota
-```
+1) Install CLI (same as above) and sign in with `seerxo-mcp login`.
 
-Manual configuration:
+2) Add this to your Claude Desktop config:
 
-```bash
-seerxo configure \
-  --email you@example.com \
-  --api-key keyId.secret \
-  --host https://api.seerxo.com
-```
-
-Local credentials are stored at `~/.seerxo-mcp/config.json`. Treat this file as sensitive.
-
-## Claude Desktop Setup
-
-Install the package and sign in first:
-
-```bash
-npm install -g seerxo
-seerxo login
-```
-
-Add the MCP server to Claude Desktop.
-
-macOS:
-
-```text
-~/Library/Application Support/Claude/claude_desktop_config.json
-```
-
-Windows:
-
-```text
-%APPDATA%/Claude/claude_desktop_config.json
-```
-
-Example:
+**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+**Windows:** `%APPDATA%/Claude/claude_desktop_config.json`
 
 ```json
 {
   "mcpServers": {
     "seerxo": {
-      "command": "seerxo"
-    }
-  }
-}
-```
-
-If you prefer explicit environment variables:
-
-```json
-{
-  "mcpServers": {
-    "seerxo": {
-      "command": "seerxo",
+      "command": "seerxo-mcp",
       "env": {
-        "SEERXO_EMAIL": "you@example.com",
-        "SEERXO_API_KEY": "keyId.secret",
-        "SEERXO_HOST": "https://api.seerxo.com"
+        "SEERXO_EMAIL": "your-email@example.com",
+        "SEERXO_API_KEY": "keyId.secret"
       }
     }
   }
 }
 ```
 
-Restart Claude Desktop after editing the config.
+**Note:** `SEERXO_EMAIL` and `SEERXO_API_KEY` are written to `~/.seerxo-mcp/config.json` after CLI login; you can copy from there if you prefer. This file is plaintext—keep it on single-user machines only and restrict permissions (`chmod 700 ~/.seerxo-mcp && chmod 600 ~/.seerxo-mcp/config.json`). Future versions will move this to a secure keychain.
 
-## Environment Variables
+3) Restart Claude Desktop
 
-| Variable | Required | Description |
-| --- | --- | --- |
-| `SEERXO_EMAIL` | Optional | Account email used for generation requests. |
-| `SEERXO_API_KEY` | Optional | API key in `keyId.secret` format. |
-| `SEERXO_HOST` | Optional | API host. Defaults to `https://api.seerxo.com`. |
-| `MCP_API_KEY` | Optional | Legacy fallback for `SEERXO_API_KEY`. |
-| `API_BASE` | Optional | Legacy fallback for `SEERXO_HOST`. |
+Close and reopen Claude Desktop completely.
 
-`SEERXO_HOST` is normalized and must be an HTTP(S) URL.
+4) Start Using
 
-## Examples
+That's it! Just ask Claude:
 
-Simple prompt:
-
-```text
-Generate an Etsy listing for a vintage leather journal.
+```
+Generate an Etsy listing for my handmade ceramic coffee mug
 ```
 
-With category:
+**Free Tier:** 5 generations per month
+**Premium:** Unlimited generations - [Upgrade at seerxo.com](https://www.seerxo.com)
 
-```text
-Generate Etsy SEO for boho macrame wall decor in Home & Living.
+> Note: The previous package `seerxo-mcp` is deprecated. Use `npm install -g seerxo`.
+
+---
+
+## 💬 Examples
+
+### Simple Request
+```
+Create Etsy SEO for "vintage leather journal"
 ```
 
-Typical output includes:
-
-- SEO title.
-- Product description.
-- 13 Etsy tags.
-- Suggested price range.
-- Current quota usage.
-
-## Local Development
-
-```bash
-npm ci
-npm run lint
-npm test
-npm run build
+### With Category
+```
+Generate an Etsy listing for handmade candles in the Home & Living category
 ```
 
-Useful files:
-
-- `mcp-server.js`: CLI and MCP server entrypoint.
-- `utils.js`: shared utility helpers.
-- `scripts/prepare-github-package.mjs`: GitHub package preparation script.
-- `*.test.js`: Node test runner coverage.
-
-## Git Workflow
-
-This repository uses a lightweight production workflow:
-
-- `main`: production-ready releases only.
-- `develop`: integration branch.
-- `feature/*`: new features from `develop`.
-- `fix/*`: non-urgent fixes from `develop`.
-- `release/*`: release candidates from `develop`.
-- `hotfix/*`: urgent production fixes from `main`.
-- `docs/*`: documentation changes from `develop`.
-- `chore/*`: maintenance changes from `develop`.
-
-Only `main` and `develop` are permanent branches. See [BRANCHING.md](BRANCHING.md), [CONTRIBUTING.md](CONTRIBUTING.md), [RELEASE.md](RELEASE.md), and [docs/GIT_WORKFLOW.md](docs/GIT_WORKFLOW.md).
-
-Release automation:
-
-```bash
-git switch main
-git pull origin main
-npm version patch
-git push origin main --follow-tags
+### With Details
+```
+I'm selling boho macrame wall hangings.
+Create an optimized Etsy listing with title, description, and tags.
 ```
 
-Version tags like `v1.0.9` trigger GitHub Release creation and npm publishing through GitHub Actions. The repository must define an `NPM_TOKEN` Actions secret.
+---
 
-## Troubleshooting
+## 📦 What You Get
 
-Check your local status:
+Each generation includes:
 
-```bash
-seerxo status
+### 📝 SEO Title
+- Under 140 characters (Etsy requirement)
+- Primary keywords included
+- Compelling and click-worthy
+
+### 📄 Product Description
+- Engaging opening hook
+- Key features and benefits
+- Usage scenarios
+- Call-to-action
+
+### 🏷️ 13 Optimized Tags
+- Mix of broad and specific keywords
+- Etsy search-optimized
+- Trending search terms included
+
+### 💰 Price Suggestion
+- Based on similar Etsy products
+- Market competitive range
+
+---
+
+
+## 🌐 Web Interface
+
+Prefer not to use Claude Desktop? Try our web interface:
+
+👉 **[seerxo.com](https://www.seerxo.com)**
+
+- Live demo
+- Instant results
+- No installation needed
+
+---
+
+## 🎨 Sample Output
+
+**Input:** "Handmade ceramic coffee mug"
+
+**Output:**
+
+```markdown
+📝 TITLE
+Handmade Ceramic Coffee Mug | Artisan Pottery | Unique Kitchen Gift | Microwave Safe
+
+📄 DESCRIPTION
+Elevate your morning coffee ritual with this beautifully handcrafted ceramic mug.
+Each piece is lovingly made by skilled artisans, ensuring no two mugs are exactly alike.
+
+The perfect addition to your kitchen collection or a thoughtful gift for coffee
+lovers. Featuring a comfortable ergonomic handle and smooth glazed finish.
+
+✨ Features:
+• Handmade with premium ceramic
+• Microwave and dishwasher safe
+• 12oz capacity
+• Unique one-of-a-kind design
+
+Perfect for daily use or special occasions. Makes an excellent housewarming or
+birthday gift.
+
+🏷️ TAGS
+handmade mug, ceramic coffee cup, pottery mug, artisan mug, unique gift,
+coffee lover gift, handcrafted, kitchen decor, tea cup, housewarming gift,
+birthday present, ceramic pottery, handmade gift
+
+💰 SUGGESTED PRICE
+$28-$45
 ```
 
-Refresh credentials:
+---
 
-```bash
-seerxo login
-```
+## 🤝 Support
 
-If Claude Desktop does not see the tool:
+- 💬 [GitHub Issues](https://github.com/semihbugrasezer/etsy-seo-mcp/issues)
+- 📧 [support@seerxo.com](mailto:support@seerxo.com)
+- 🌐 [seerxo.com](https://www.seerxo.com)
 
-- Confirm `seerxo` is installed globally.
-- Restart Claude Desktop completely.
-- Confirm the config JSON is valid.
-- Run `seerxo status` in a terminal.
+---
 
-If you see an invalid API key error, run `seerxo login` or re-run `seerxo configure` with the full `keyId.secret` value.
+## 📝 License
 
-## Security
+MIT License - see [LICENSE](LICENSE) file for details.
 
-Do not commit API keys, tokens, local config files, Claude Desktop config values, or customer data. See [SECURITY.md](SECURITY.md).
+---
 
-## Support
+<div align="center">
 
-- GitHub Issues: https://github.com/semihbugrasezer/etsy-seo-mcp/issues
-- Website: https://www.seerxo.com
-- Support: support@seerxo.com
+**Built for Etsy sellers by Seerxo**
 
-## License
+[⭐ Star on GitHub](https://github.com/semihbugrasezer/etsy-seo-mcp) • [🚀 Try Now](https://www.seerxo.com)
 
-MIT. See [LICENSE](LICENSE).
+</div>
