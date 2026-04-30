@@ -1,0 +1,15 @@
+name: Manual Check
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  noop:
+    name: No-op
+    runs-on: ubuntu-latest
+    steps:
+      - name: Acknowledge
+        run: echo "Manual workflow placeholder for GitHub code scanning."
