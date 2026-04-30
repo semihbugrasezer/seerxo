@@ -8,10 +8,23 @@ import readline from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { createRequire } from 'node:module';
 import { execSync, spawn } from 'node:child_process';
-import boxen from 'boxen';
 import chalk from 'chalk';
 import open from 'open';
 import { DEFAULT_HOST, normalizeHost } from './utils.js';
+
+function boxen(content, options = {}) {
+  const title = options.title ? ` ${options.title} ` : '';
+  const lines = String(content).split('\n');
+  const visibleWidth = Math.max(
+    title.length,
+    ...lines.map((line) => line.replace(/\u001b\[[0-9;]*m/g, '').length)
+  );
+  const width = Math.max(visibleWidth + 4, 12);
+  const top = `+${title}${'-'.repeat(Math.max(0, width - title.length - 2))}+`;
+  const bottom = `+${'-'.repeat(width - 2)}+`;
+  const body = lines.map((line) => `| ${line}${' '.repeat(Math.max(0, width - 3 - line.replace(/\u001b\[[0-9;]*m/g, '').length))}|`);
+  return [top, ...body, bottom].join('\n');
+}
 
 function openUrlInBrowser(url) {
   try {
@@ -37,6 +50,11 @@ const LOGIN_POLL_INTERVAL_MS = 4000;
 const LOGIN_TIMEOUT_MS = 15 * 60 * 1000;
 const isInteractiveSession = process.stdin.isTTY;
 const MIN_API_KEY_SECRET_LENGTH = 16;
+const shouldSkipLiveQuota = () => process.env.SEERXO_SKIP_LIVE_QUOTA === '1';
+
+if (process.env.NODE_ENV === 'test') {
+  process.stdin.unref?.();
+}
 
 const loadLocalConfigAsync = async () => {
   try {
@@ -206,7 +224,7 @@ async function fetchQuota() {
 async function printStatusWithQuota() {
   printStatus();
 
-  if (!hasValidApiKey || !userEmail) {
+  if (!hasValidApiKey || !userEmail || shouldSkipLiveQuota()) {
     return;
   }
 

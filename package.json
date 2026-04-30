@@ -11,7 +11,9 @@
   },
   "scripts": {
     "start": "node mcp-server.js",
-    "test": "NODE_ENV=test node --test"
+    "test": "NODE_ENV=test node --test",
+    "lint": "node --check mcp-server.js && node --check utils.js && node --check scripts/prepare-github-package.mjs && node --check scripts/validate-package-files.mjs",
+    "build": "node scripts/validate-package-files.mjs"
   },
   "keywords": [
     "mcp",
@@ -42,7 +44,6 @@
     "npm": ">=9.0.0"
   },
   "dependencies": {
-    "boxen": "^7.1.1",
     "chalk": "^5.3.0",
     "open": "^11.0.0"
   },
