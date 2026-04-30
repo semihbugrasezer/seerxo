@@ -7,7 +7,7 @@ import path from 'node:path';
 import readline from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { createRequire } from 'node:module';
-import { execSync, spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import chalk from 'chalk';
 import open from 'open';
 import { DEFAULT_HOST, normalizeHost } from './utils.js';
@@ -50,6 +50,7 @@ const LOGIN_POLL_INTERVAL_MS = 4000;
 const LOGIN_TIMEOUT_MS = 15 * 60 * 1000;
 const isInteractiveSession = process.stdin.isTTY;
 const MIN_API_KEY_SECRET_LENGTH = 16;
+const UNEXPECTED_TOKEN_REGEX = /Unexpected token/;
 const shouldSkipLiveQuota = () => process.env.SEERXO_SKIP_LIVE_QUOTA === '1';
 
 if (process.env.NODE_ENV === 'test') {
@@ -63,6 +64,15 @@ const loadLocalConfigAsync = async () => {
   } catch {
     return {};
   }
+};
+
+const saveLocalConfigAsync = async (configData) => {
+  await fsPromises.mkdir(CONFIG_DIR, { recursive: true, mode: 0o700 });
+  await fsPromises.writeFile(
+    CONFIG_PATH,
+    JSON.stringify(configData, null, 2),
+    { encoding: 'utf8', mode: 0o600 }
+  );
 };
 
 let localConfig = {};
@@ -114,7 +124,7 @@ function syncApiKeyState() {
 
 function printStatus() {
   const keyState = hasValidApiKey
-    ? `✔ configured (${apiKeyParts[0]})`
+    ? '✔ configured'
     : `✖ missing or invalid (expected keyId.secret with secret >= ${MIN_API_KEY_SECRET_LENGTH} chars)`;
 
   console.log(
@@ -137,21 +147,29 @@ function clearCliScreen() {
 
 const getQuotaEndpoint = () => `${apiHost}/mcp/quota`;
 
-function buildQuotaSummary(usage = {}) {
+export function buildQuotaSummary(usage = {}) {
   const limitRaw = usage.limit;
   const remainingRaw = usage.remaining;
   const usedRaw = usage.current ?? usage.used;
+
   const hasFiniteLimit = Number.isFinite(Number(limitRaw));
-  const limit = hasFiniteLimit ? Number(limitRaw) : null;
-  const remaining = Number.isFinite(Number(remainingRaw))
-    ? Math.max(0, Number(remainingRaw))
-    : null;
-  const current =
-    Number.isFinite(Number(usedRaw))
-      ? Math.max(0, Number(usedRaw))
-      : hasFiniteLimit && remaining !== null
-      ? Math.max(0, limit - remaining)
-      : 0;
+
+  let limit = null;
+  if (hasFiniteLimit) {
+    limit = Number(limitRaw);
+  }
+
+  let remaining = null;
+  if (Number.isFinite(Number(remainingRaw))) {
+    remaining = Math.max(0, Number(remainingRaw));
+  }
+
+  let current = 0;
+  if (Number.isFinite(Number(usedRaw))) {
+    current = Math.max(0, Number(usedRaw));
+  } else if (hasFiniteLimit && remaining !== null) {
+    current = Math.max(0, limit - remaining);
+  }
 
   if (hasFiniteLimit && remaining !== null) {
     return {
@@ -242,7 +260,7 @@ async function printStatusWithQuota() {
   }
 }
 
-function formatApiErrorMessage(message, status) {
+export function formatApiErrorMessage(message, status) {
   const normalizedMessage = typeof message === 'string' ? message : '';
   const looksLikeInvalidKey =
     status === 401 ||
@@ -320,7 +338,7 @@ export const getFlagValue = (flag, list = []) => {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-const fetchJson = async (url, options = {}) => {
+export const fetchJson = async (url, options = {}) => {
   const response = await fetch(url, options);
   let data = null;
   try {
@@ -409,16 +427,16 @@ const runSelfUpdate = () => {
   const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
   let prefix = '';
   try {
-    prefix = execSync(`${npmCmd} config get prefix`).toString().trim();
+    prefix = execFileSync(npmCmd, ['config', 'get', 'prefix']).toString().trim();
   } catch {
     prefix = '';
   }
   try {
-    const prefixArg = prefix ? ` --prefix "${prefix}"` : '';
-    execSync(
-      `${npmCmd} install -g seerxo@latest --force${prefixArg}`,
-      { stdio: 'inherit' }
-    );
+    const installArgs = ['install', '-g', 'seerxo@latest', '--force'];
+    if (prefix) {
+      installArgs.push('--prefix', prefix);
+    }
+    execFileSync(npmCmd, installArgs, { stdio: 'inherit' });
     console.log('Update complete. Run "seerxo --version" to verify.');
   } catch (error) {
     console.error('Update failed.');
@@ -476,12 +494,7 @@ const runConfigureCommand = async (extraArgs = [], options = {}) => {
     process.exit(1);
   }
 
-  await fsPromises.mkdir(CONFIG_DIR, { recursive: true, mode: 0o700 });
-  await fsPromises.writeFile(
-    CONFIG_PATH,
-    JSON.stringify({ email, apiKey, host }, null, 2),
-    { encoding: 'utf8', mode: 0o600 }
-  );
+  await saveLocalConfigAsync({ email, apiKey, host });
 
   setRuntimeConfig({ email, apiKey, host });
 
@@ -500,12 +513,7 @@ const runLogoutCommand = async () => {
     host = normalizeHost(existing.host || host);
   } catch {}
 
-  await fsPromises.mkdir(CONFIG_DIR, { recursive: true, mode: 0o700 });
-  await fsPromises.writeFile(
-    CONFIG_PATH,
-    JSON.stringify({ host }, null, 2),
-    { encoding: 'utf8', mode: 0o600 }
-  );
+  await saveLocalConfigAsync({ host });
 
   setRuntimeConfig({
     email: null,
@@ -576,20 +584,11 @@ const runLoginCommand = async (extraArgs = [], options = {}) => {
 
       if (poll.status === 'approved' && poll.apiKey) {
         const resolvedHost = poll.host ? normalizeHost(poll.host) : host;
-        await fsPromises.mkdir(CONFIG_DIR, { recursive: true, mode: 0o700 });
-        await fsPromises.writeFile(
-          CONFIG_PATH,
-          JSON.stringify(
-            {
-              email: poll.email || email,
-              apiKey: poll.apiKey,
-              host: resolvedHost,
-            },
-            null,
-            2
-          ),
-          { encoding: 'utf8', mode: 0o600 }
-        );
+        await saveLocalConfigAsync({
+          email: poll.email || email,
+          apiKey: poll.apiKey,
+          host: resolvedHost,
+        });
 
         setRuntimeConfig({
           email: poll.email || email,
@@ -718,19 +717,12 @@ async function generateEtsySEO(productName, category = '') {
 
   seoCache.set(cacheKey, promise);
 
-  try {
-    const result = await promise;
-    seoCache.set(cacheKey, result);
-    return result;
-  } catch (error) {
-    throw error;
-  }
+  const result = await promise;
+  seoCache.set(cacheKey, result);
+  return result;
 }
 
-async function startInteractiveShell() {
-  clearCliScreen();
-  printCliBanner();
-
+async function promptLoginIfNecessary() {
   if (!userEmail || !hasValidApiKey) {
     const rlLogin = readline.createInterface({ input, output });
     const answer = (
@@ -754,6 +746,42 @@ async function startInteractiveShell() {
       );
     }
   }
+}
+
+function printSeoResult(productName, result) {
+  console.log(
+    boxen(
+      [
+        chalk.bold(`✅ Etsy SEO for "${productName}"`),
+        result.usage ? renderQuotaPanel(result.usage, { title: 'Credits', compact: true }) : '',
+        '',
+        chalk.bold('Title:'),
+        result.title,
+        '',
+        chalk.bold('Description:'),
+        result.description,
+        '',
+        chalk.bold('Tags:'),
+        result.tags.join(', '),
+        '',
+        chalk.bold('Suggested Price:'),
+        result.suggested_price_range,
+      ].join('\n'),
+      {
+        padding: 1,
+        borderColor: 'cyan',
+        borderStyle: 'round',
+        title: 'seerxo',
+      }
+    )
+  );
+}
+
+async function startInteractiveShell() {
+  clearCliScreen();
+  printCliBanner();
+
+  await promptLoginIfNecessary();
 
   const promptLabel =
     chalk.gray('[') +
@@ -849,32 +877,7 @@ async function startInteractiveShell() {
         }
       try {
         const result = await generateEtsySEO(productName, category);
-        console.log(
-          boxen(
-            [
-              chalk.bold(`✅ Etsy SEO for "${productName}"`),
-              result.usage ? renderQuotaPanel(result.usage, { title: 'Credits', compact: true }) : '',
-              '',
-                chalk.bold('Title:'),
-                result.title,
-                '',
-                chalk.bold('Description:'),
-                result.description,
-                '',
-                chalk.bold('Tags:'),
-                result.tags.join(', '),
-                '',
-                chalk.bold('Suggested Price:'),
-                result.suggested_price_range,
-              ].join('\n'),
-              {
-                padding: 1,
-                borderColor: 'cyan',
-                borderStyle: 'round',
-                title: 'seerxo',
-              }
-            )
-          );
+        printSeoResult(productName, result);
         } catch (error) {
           console.error(
             chalk.red(
@@ -896,32 +899,7 @@ async function startInteractiveShell() {
 
       try {
         const result = await generateEtsySEO(productName, category);
-        console.log(
-          boxen(
-            [
-              chalk.bold(`✅ Etsy SEO for "${productName}"`),
-              result.usage ? renderQuotaPanel(result.usage, { title: 'Credits', compact: true }) : '',
-              '',
-              chalk.bold('Title:'),
-              result.title,
-              '',
-              chalk.bold('Description:'),
-              result.description,
-              '',
-              chalk.bold('Tags:'),
-              result.tags.join(', '),
-              '',
-              chalk.bold('Suggested Price:'),
-              result.suggested_price_range,
-            ].join('\n'),
-            {
-              padding: 1,
-              borderColor: 'cyan',
-              borderStyle: 'round',
-              title: 'seerxo',
-            }
-          )
-        );
+        printSeoResult(productName, result);
       } catch (error) {
         const message =
           error?.payload?.message ||
@@ -1168,7 +1146,7 @@ function startMcpServer() {
       } catch (error) {
         if (
           error instanceof SyntaxError ||
-          /Unexpected token/.test(error.message || '')
+          UNEXPECTED_TOKEN_REGEX.test(error.message || '')
         ) {
           console.error(
             '[seerxo] Invalid JSON received, ignoring.'
