@@ -8,10 +8,23 @@ import readline from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { createRequire } from 'node:module';
 import { execFileSync, spawn } from 'node:child_process';
-import boxen from 'boxen';
 import chalk from 'chalk';
 import open from 'open';
 import { DEFAULT_HOST, normalizeHost } from './utils.js';
+
+function boxen(content, options = {}) {
+  const title = options.title ? ` ${options.title} ` : '';
+  const lines = String(content).split('\n');
+  const visibleWidth = Math.max(
+    title.length,
+    ...lines.map((line) => line.replace(/\u001b\[[0-9;]*m/g, '').length)
+  );
+  const width = Math.max(visibleWidth + 4, 12);
+  const top = `+${title}${'-'.repeat(Math.max(0, width - title.length - 2))}+`;
+  const bottom = `+${'-'.repeat(width - 2)}+`;
+  const body = lines.map((line) => `| ${line}${' '.repeat(Math.max(0, width - 3 - line.replace(/\u001b\[[0-9;]*m/g, '').length))}|`);
+  return [top, ...body, bottom].join('\n');
+}
 
 function openUrlInBrowser(url) {
   try {
@@ -38,6 +51,11 @@ const LOGIN_TIMEOUT_MS = 15 * 60 * 1000;
 const isInteractiveSession = process.stdin.isTTY;
 const MIN_API_KEY_SECRET_LENGTH = 16;
 const UNEXPECTED_TOKEN_REGEX = /Unexpected token/;
+const shouldSkipLiveQuota = () => process.env.SEERXO_SKIP_LIVE_QUOTA === '1';
+
+if (process.env.NODE_ENV === 'test') {
+  process.stdin.unref?.();
+}
 
 const loadLocalConfigAsync = async () => {
   try {
@@ -224,7 +242,7 @@ async function fetchQuota() {
 async function printStatusWithQuota() {
   printStatus();
 
-  if (!hasValidApiKey || !userEmail) {
+  if (!hasValidApiKey || !userEmail || shouldSkipLiveQuota()) {
     return;
   }
 
@@ -631,10 +649,10 @@ async function generateEtsySEO(productName, category = '') {
 
   const cacheKey = `${productName.trim().toLowerCase()}|${(category || '').trim().toLowerCase()}`;
   if (seoCache.has(cacheKey)) {
-    return seoCache.get(cacheKey);
+    return await seoCache.get(cacheKey);
   }
 
-  const fetchPromise = (async () => {
+  const promise = (async () => {
     try {
       const payload = {
         product_name: productName,
@@ -642,46 +660,46 @@ async function generateEtsySEO(productName, category = '') {
         email: userEmail,
       };
 
-    const { signature, timestamp } = generateSignature(payload);
+      const { signature, timestamp } = generateSignature(payload);
 
-    const response = await fetch(getApiEndpoint(), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': `seerxo/${clientVersion}`,
-        'X-MCP-Signature': signature,
-        'X-MCP-Timestamp': timestamp.toString(),
-        'X-MCP-Version': clientVersion,
-        'X-MCP-API-Key': apiKeyHeader,
-      },
-      body: JSON.stringify(payload),
-    });
+      const response = await fetch(getApiEndpoint(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': `seerxo/${clientVersion}`,
+          'X-MCP-Signature': signature,
+          'X-MCP-Timestamp': timestamp.toString(),
+          'X-MCP-Version': clientVersion,
+          'X-MCP-API-Key': apiKeyHeader,
+        },
+        body: JSON.stringify(payload),
+      });
 
-    const data = await response.json().catch(() => ({}));
+      const data = await response.json().catch(() => ({}));
 
-    if (!response.ok) {
-      const rawMessage =
-        data?.error || data?.message || `API error: ${response.status}`;
-      const message = formatApiErrorMessage(rawMessage, response.status);
-      const payload = {
-        message,
-        status: response.status,
-        paymentLink: data?.upgrade?.paymentLink || data?.paymentLink || null,
-      };
-      const error = new Error(message);
-      error.payload = payload;
-      error.status = response.status;
-      throw error;
-    }
+      if (!response.ok) {
+        const rawMessage =
+          data?.error || data?.message || `API error: ${response.status}`;
+        const message = formatApiErrorMessage(rawMessage, response.status);
+        const payload = {
+          message,
+          status: response.status,
+          paymentLink: data?.upgrade?.paymentLink || data?.paymentLink || null,
+        };
+        const error = new Error(message);
+        error.payload = payload;
+        error.status = response.status;
+        throw error;
+      }
 
-    if (!data.success) {
-      const message = data.error || 'Content generation failed';
-      const error = new Error(message);
-      error.payload = {
-        message,
-      };
-      throw error;
-    }
+      if (!data.success) {
+        const message = data.error || 'Content generation failed';
+        const error = new Error(message);
+        error.payload = {
+          message,
+        };
+        throw error;
+      }
 
       const result = {
         ...data.data,
@@ -697,8 +715,11 @@ async function generateEtsySEO(productName, category = '') {
     }
   })();
 
-  seoCache.set(cacheKey, fetchPromise);
-  return fetchPromise;
+  seoCache.set(cacheKey, promise);
+
+  const result = await promise;
+  seoCache.set(cacheKey, result);
+  return result;
 }
 
 async function promptLoginIfNecessary() {

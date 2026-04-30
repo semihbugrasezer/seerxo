@@ -32,6 +32,7 @@ test('mcp-server prints status with configured credentials', () => {
     env: {
       ...process.env,
       NODE_ENV: 'cli-test',
+      SEERXO_SKIP_LIVE_QUOTA: '1',
       SEERXO_EMAIL: 'semih@example.com',
       SEERXO_API_KEY:
         'keyid.someVeryLongSecret1234567890',

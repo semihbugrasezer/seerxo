@@ -15,6 +15,30 @@ test('normalizeHost', async (t) => {
     assert.strictEqual(normalizeHost('https://api.example.com'), 'https://api.example.com');
   });
 
+  await t.test('allows http localhost URLs', () => {
+    assert.strictEqual(normalizeHost('http://localhost:3000'), 'http://localhost:3000');
+  });
+
+  await t.test('removes query strings and hashes', () => {
+    assert.strictEqual(
+      normalizeHost('https://api.example.com/v1?token=secret#frag'),
+      'https://api.example.com/v1'
+    );
+  });
+
+  await t.test('rejects non-http protocols', () => {
+    assert.strictEqual(normalizeHost('file:///etc/passwd'), DEFAULT_HOST);
+    assert.strictEqual(normalizeHost('javascript:alert(1)'), DEFAULT_HOST);
+  });
+
+  await t.test('rejects URLs with embedded credentials', () => {
+    assert.strictEqual(normalizeHost('https://user:pass@api.example.com'), DEFAULT_HOST);
+  });
+
+  await t.test('returns DEFAULT_HOST for invalid URLs', () => {
+    assert.strictEqual(normalizeHost('api.example.com'), DEFAULT_HOST);
+  });
+
   await t.test('returns DEFAULT_HOST for empty string', () => {
     assert.strictEqual(normalizeHost(''), DEFAULT_HOST);
   });
