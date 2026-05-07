@@ -1,4 +1,4 @@
-# 1.0.0 (2026-05-07)
+# [1.1.1](https://github.com/semihbugrasezer/etsy-seo-mcp/compare/v1.1.0...v1.1.1) (2026-05-08)
 
 
 ### Bug Fixes
