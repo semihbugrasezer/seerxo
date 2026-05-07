@@ -1,3 +1,10 @@
+# 1.0.0 (2026-05-07)
+
+
+### Bug Fixes
+
+* override ip-address vulnerability ([0e945bf](https://github.com/semihbugrasezer/etsy-seo-mcp/commit/0e945bfded46fd0530e09b2eb76283ade1e528da))
+
 # [1.1.0](https://github.com/semihbugrasezer/etsy-seo-mcp/compare/v1.0.6...v1.1.0) (2026-04-30)
 
 
