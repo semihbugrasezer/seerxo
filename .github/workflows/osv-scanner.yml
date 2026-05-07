@@ -25,7 +25,7 @@ jobs:
     permissions:
       actions: read
       contents: read
-    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@375a0e8ebdc98e99b02ac4338a724f5750f21213 # v2.3.1
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@c51854704019a247608d928f370c98740469d4b5 # v2.3.5
     with:
       upload-sarif: false
 
