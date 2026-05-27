@@ -5,12 +5,12 @@
   "type": "module",
   "main": "mcp-server.js",
   "bin": {
-    "etsy-seo-mcp": "mcp-server.js",
-    "seerxo-mcp": "mcp-server.js",
-    "seerxo": "mcp-server.js"
+    "etsy-seo-mcp": "bin/seerxo-mcp.js",
+    "seerxo-mcp": "bin/seerxo-mcp.js",
+    "seerxo": "bin/seerxo.js"
   },
   "scripts": {
-    "start": "node mcp-server.js",
+    "start": "node bin/seerxo.js",
     "test": "echo \"No tests configured on main\"",
     "lint": "node --check mcp-server.js && node --check utils.js && node --check scripts/validate-package-files.mjs",
     "build": "node scripts/validate-package-files.mjs"
@@ -49,6 +49,8 @@
   },
   "files": [
     "mcp-server.js",
+    "bin/seerxo.js",
+    "bin/seerxo-mcp.js",
     "utils.js",
     "README.md",
     "LICENSE"

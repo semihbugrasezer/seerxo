@@ -277,7 +277,7 @@ export function formatApiErrorMessage(message, status) {
   return normalizedMessage || 'Failed to generate Etsy SEO content';
 }
 
-async function initConfig() {
+export async function initConfig() {
   localConfig = await loadLocalConfigAsync();
 
   userEmail =
@@ -447,7 +447,8 @@ const runSelfUpdate = () => {
     if (error?.message) {
       console.error(`Error: ${error.message}`);
     }
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
 };
 
@@ -473,12 +474,13 @@ const runConfigureCommand = async (extraArgs = [], options = {}) => {
       ).trim();
     }
   } finally {
-    rl.close();
+    if (!rl.closed) { rl.close(); rl.closed = true; };
   }
 
   if (!email) {
     console.error('Email is required.');
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
 
   if (!resolveApiKeyState(apiKey).isValid) {
@@ -486,12 +488,14 @@ const runConfigureCommand = async (extraArgs = [], options = {}) => {
       console.error(
         'That value looks like a key ID only, not the full API key. Use the full "keyId.secret" value or run "seerxo login".'
       );
-      process.exit(1);
+      process.exitCode = 1;
+      return;
     }
     console.error(
       `API key must be in the format "keyId.secret" and the secret part must be at least ${MIN_API_KEY_SECRET_LENGTH} characters.`
     );
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
 
   await saveLocalConfigAsync({ email, apiKey, host });
@@ -613,7 +617,7 @@ const runLoginCommand = async (extraArgs = [], options = {}) => {
     throw new Error('Timed out waiting for approval. Please try again.');
   } catch (error) {
     console.error(error.message || 'CLI login failed.');
-    process.exit(1);
+    process.exitCode = 1; return;
   }
 };
 
@@ -777,7 +781,7 @@ function printSeoResult(productName, result) {
   );
 }
 
-async function startInteractiveShell() {
+export async function startInteractiveShell() {
   clearCliScreen();
   printCliBanner();
 
@@ -800,25 +804,25 @@ async function startInteractiveShell() {
       const cmd = line.startsWith('/') ? line.slice(1) : line;
 
       if (cmd === 'quit' || cmd === 'exit') {
-        rl.close();
+        if (!rl.closed) { rl.close(); rl.closed = true; };
         console.log('Bye 👋');
         return;
       }
 
       if (cmd === 'login') {
-        rl.close();
+        if (!rl.closed) { rl.close(); rl.closed = true; };
         await runLoginCommand([], { showBanner: false });
         return promptLoop();
       }
 
       if (cmd === 'logout' || cmd === 'signout' || cmd === 'sign-out') {
-        rl.close();
+        if (!rl.closed) { rl.close(); rl.closed = true; };
         await runLogoutCommand();
         return promptLoop();
       }
 
       if (cmd === 'configure') {
-        rl.close();
+        if (!rl.closed) { rl.close(); rl.closed = true; };
         await runConfigureCommand([], { showBanner: false });
         return promptLoop();
       }
@@ -914,38 +918,38 @@ async function startInteractiveShell() {
   await promptLoop();
 }
 
-async function handleCli(subArgs) {
+export async function handleCli(subArgs) {
   const sub = normalizeCommandName(subArgs[0]);
 
   if (!sub || sub === '--help' || sub === '-h') {
     printCliBanner();
     printUsage();
-    process.exit(0);
+    return;
   }
 
   if (sub === '--version' || sub === '-v') {
     console.log(clientVersion);
-    process.exit(0);
+    return;
   }
 
   if (sub === 'configure') {
     await runConfigureCommand(subArgs.slice(1));
-    process.exit(0);
+    return;
   }
 
   if (sub === 'login') {
     await runLoginCommand(subArgs.slice(1));
-    process.exit(0);
+    return;
   }
 
   if (sub === 'logout') {
     await runLogoutCommand();
-    process.exit(0);
+    return;
   }
 
   if (sub === 'status') {
     await printStatusWithQuota();
-    process.exit(0);
+    return;
   }
 
   if (sub === 'quota') {
@@ -954,9 +958,9 @@ async function handleCli(subArgs) {
       console.log(renderQuotaPanel(quota, { title: 'Live Credits' }));
     } catch (error) {
       console.error(error.message || 'Failed to load remaining credits');
-      process.exit(1);
+      process.exitCode = 1; return;
     }
-    process.exit(0);
+    return;
   }
 
   if (sub === 'generate') {
@@ -969,7 +973,8 @@ async function handleCli(subArgs) {
 
     if (productIndex === -1 || !subArgs[productIndex + 1]) {
       console.error('Missing argument: --product "Product name"');
-      process.exit(1);
+      process.exitCode = 1;
+      return;
     }
     const productName = subArgs[productIndex + 1];
     const category =
@@ -1011,27 +1016,28 @@ async function handleCli(subArgs) {
       }
     } catch (error) {
       console.error(error.message || 'Content generation failed');
-      process.exit(1);
+      process.exitCode = 1;
+      return;
     }
-    process.exit(0);
+    return;
   }
 
   if (sub === 'update' || sub === 'upgrade') {
     runSelfUpdate();
-    process.exit(0);
+    return;
   }
 
   console.error(`[seerxo] Unknown command: ${sub}`);
   printUsage();
-  process.exit(1);
+  process.exitCode = 1;
 }
 
-function startMcpServer() {
+export function startMcpServer() {
   if (!userEmail || !hasValidApiKey) {
     console.error(
       '[seerxo] Missing credentials. Run "seerxo login" or "seerxo configure" first.'
     );
-    process.exit(1);
+    process.exitCode = 1; return;
   }
 
   process.stdin.setEncoding('utf8');
@@ -1168,63 +1174,14 @@ function startMcpServer() {
   });
 
   process.stdin.on('end', () => {
-    process.exit(0);
+    return;
   });
 
   process.on('uncaughtException', (error) => {
     console.error('[seerxo] Uncaught error:', error);
-    process.exit(1);
+    process.exitCode = 1; return;
   });
 
   console.error('Seerxo MCP Server started');
 }
 
-async function main() {
-  await initConfig();
-
-  if (invokedAsSeerxo) {
-    if (args.length === 0) {
-      await startInteractiveShell();
-      return;
-    }
-    await handleCli(args);
-    return;
-  }
-
-  if (invokedAsMcp) {
-    const cliSubcommands = new Set([
-      'login',
-      'signin',
-      'sign-in',
-      'logout',
-      'signout',
-      'sign-out',
-      'configure',
-      'generate',
-      'status',
-      'quota',
-      'update',
-      'upgrade',
-      '--help',
-      '-h',
-      '--version',
-      '-v',
-    ]);
-    if (args.length > 0 && cliSubcommands.has(args[0])) {
-      await handleCli(args);
-      return;
-    }
-
-    startMcpServer();
-    return;
-  }
-
-  await handleCli(args);
-}
-
-if (process.env.NODE_ENV !== 'test') {
-  main().catch((err) => {
-    console.error('[seerxo] Fatal error:', err);
-    process.exit(1);
-  });
-}
