@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/semihbugrasezer/etsy-seo-mcp/compare/v1.1.1...v1.1.2) (2026-05-30)
+
+
+### Bug Fixes
+
+* Fix Windows MCP stdout issue and libuv crash ([cabe47b](https://github.com/semihbugrasezer/etsy-seo-mcp/commit/cabe47b4833cb1ec14f9eca13f2f8ed420ace588))
+
 # [1.1.1](https://github.com/semihbugrasezer/etsy-seo-mcp/compare/v1.1.0...v1.1.1) (2026-05-08)
 
 
