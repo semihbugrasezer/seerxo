@@ -1,3 +1,13 @@
+## [1.1.3](https://github.com/semihbugrasezer/etsy-seo-mcp/compare/v1.1.2...v1.1.3) (2026-06-11)
+
+
+### Bug Fixes
+
+* enable npm publishing ([85d749e](https://github.com/semihbugrasezer/etsy-seo-mcp/commit/85d749e4e0c0945f71f4926d6b20ba1b1e003283))
+* grant release workflow publish permissions ([1dcc7f9](https://github.com/semihbugrasezer/etsy-seo-mcp/commit/1dcc7f93c38c02bc2c1790266c7ddaeb850fb969))
+* pass npm token to release ([2601f64](https://github.com/semihbugrasezer/etsy-seo-mcp/commit/2601f643f788d36cc0509a6aee29211ef1dc8541))
+* update npm override for osv ([f91f3bf](https://github.com/semihbugrasezer/etsy-seo-mcp/commit/f91f3bf9511197d104fd9d5143ea48520acc19c4))
+
 ## [1.1.2](https://github.com/semihbugrasezer/etsy-seo-mcp/compare/v1.1.1...v1.1.2) (2026-05-30)
 
 
