@@ -1,3 +1,10 @@
+## [1.1.5](https://github.com/semihbugrasezer/etsy-seo-mcp/compare/v1.1.4...v1.1.5) (2026-06-24)
+
+
+### Bug Fixes
+
+* unblock semantic-release checks ([2a9b9e0](https://github.com/semihbugrasezer/etsy-seo-mcp/commit/2a9b9e0f79d631db0cc2eb69fab7948445f8f140))
+
 ## [1.1.4](https://github.com/semihbugrasezer/etsy-seo-mcp/compare/v1.1.3...v1.1.4) (2026-06-24)
 
 
