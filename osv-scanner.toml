@@ -1,0 +1,8 @@
+[[PackageOverrides]]
+name = "undici"
+version = "6.26.0"
+ecosystem = "npm"
+group = "dev"
+vulnerability.ignore = true
+effectiveUntil = 2026-08-31
+reason = "Bundled inside npm 11.17.0 via node-gyp release tooling; not shipped in the seerxo package runtime."
