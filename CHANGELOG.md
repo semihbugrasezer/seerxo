@@ -1,3 +1,10 @@
+## [1.1.4](https://github.com/semihbugrasezer/etsy-seo-mcp/compare/v1.1.3...v1.1.4) (2026-06-24)
+
+
+### Bug Fixes
+
+* unblock checkout update checks ([c89cd01](https://github.com/semihbugrasezer/etsy-seo-mcp/commit/c89cd01fa5b6ad9c0fc334e6aaeb57c5085ab55d))
+
 ## [1.1.3](https://github.com/semihbugrasezer/etsy-seo-mcp/compare/v1.1.2...v1.1.3) (2026-06-11)
 
 
