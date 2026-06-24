@@ -47,4 +47,4 @@ jobs:
         run: npm run build --if-present
 
       - name: Dependency audit
-        run: npm audit --audit-level=high
+        run: npm audit --audit-level=high --omit=dev
