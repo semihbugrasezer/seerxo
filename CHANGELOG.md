@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/semihbugrasezer/etsy-seo-mcp/compare/v1.2.1...v1.3.0) (2026-06-29)
+
+
+### Features
+
+* **skill:** copy-paste-ready Etsy output + full value surfaced ([#57](https://github.com/semihbugrasezer/etsy-seo-mcp/issues/57)) ([5d2ae04](https://github.com/semihbugrasezer/etsy-seo-mcp/commit/5d2ae0427c472a60c6fd7f672418977eac074a75))
+
 ## [1.2.1](https://github.com/semihbugrasezer/etsy-seo-mcp/compare/v1.2.0...v1.2.1) (2026-06-29)
 
 
