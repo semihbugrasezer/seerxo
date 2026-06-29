@@ -19,6 +19,9 @@
     "mcp",
     "model-context-protocol",
     "claude-desktop",
+    "claude-code",
+    "claude-skill",
+    "cli",
     "etsy",
     "etsy-seo",
     "seo",
@@ -51,6 +54,7 @@
     "mcp-server.js",
     "bin/seerxo.js",
     "bin/seerxo-mcp.js",
+    "skills/seerxo-etsy-seo/SKILL.md",
     "utils.js",
     "README.md",
     "LICENSE"
