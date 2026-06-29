@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/semihbugrasezer/etsy-seo-mcp/compare/v1.1.5...v1.2.0) (2026-06-29)
+
+
+### Features
+
+* **skill:** add Claude Code skill installer (third way to use Seerxo) ([#55](https://github.com/semihbugrasezer/etsy-seo-mcp/issues/55)) ([66bda25](https://github.com/semihbugrasezer/etsy-seo-mcp/commit/66bda2539832b8cc3f5ff50f77a4d4c7231dee59))
+
 ## [1.1.5](https://github.com/semihbugrasezer/etsy-seo-mcp/compare/v1.1.4...v1.1.5) (2026-06-24)
 
 
