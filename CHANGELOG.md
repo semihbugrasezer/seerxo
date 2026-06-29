@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/semihbugrasezer/etsy-seo-mcp/compare/v1.2.0...v1.2.1) (2026-06-29)
+
+
+### Bug Fixes
+
+* drop suggested price; correct README/skill to real features ([#56](https://github.com/semihbugrasezer/etsy-seo-mcp/issues/56)) ([ed9ae0f](https://github.com/semihbugrasezer/etsy-seo-mcp/commit/ed9ae0fbcdf8f70798315fdf513d2e0981c85fa6))
+
 # [1.2.0](https://github.com/semihbugrasezer/etsy-seo-mcp/compare/v1.1.5...v1.2.0) (2026-06-29)
 
 
