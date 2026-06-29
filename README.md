@@ -6,9 +6,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub](https://img.shields.io/github/stars/semihbugrasezer/etsy-seo-mcp?style=social)](https://github.com/semihbugrasezer/etsy-seo-mcp)
 
-**AI-powered Etsy product listing generator for Claude Desktop**
+**AI-powered Etsy listing generator — CLI, Claude Code skill, or MCP server**
 
-Generate perfect SEO titles, descriptions, and tags in seconds
+Generate SEO-optimized titles, descriptions, and 13 tags in seconds
 
 [Live Demo](https://www.seerxo.com) • [Quick Start](#-quick-start) • [Examples](#-examples)
 
@@ -133,7 +133,7 @@ Generate an Etsy listing for my handmade ceramic coffee mug
 ```
 
 **Free Tier:** 5 generations per month
-**Premium:** Unlimited generations - [Upgrade at seerxo.com](https://www.seerxo.com)
+**Premium:** Up to 300 generations per month - [Upgrade at seerxo.com](https://www.seerxo.com)
 
 > Note: The previous package `seerxo-mcp` is deprecated. Use `npm install -g seerxo`.
 
@@ -210,10 +210,6 @@ Each generation includes:
 - Etsy search-optimized
 - Trending search terms included
 
-### 💰 Price Suggestion
-- Based on similar Etsy products
-- Market competitive range
-
 ---
 
 
@@ -259,9 +255,6 @@ birthday gift.
 handmade mug, ceramic coffee cup, pottery mug, artisan mug, unique gift,
 coffee lover gift, handcrafted, kitchen decor, tea cup, housewarming gift,
 birthday present, ceramic pottery, handmade gift
-
-💰 SUGGESTED PRICE
-$28-$45
 ```
 
 ---

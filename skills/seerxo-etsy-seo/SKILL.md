@@ -1,11 +1,11 @@
 ---
 name: seerxo-etsy-seo
-description: Generate SEO-optimized Etsy listings — title, description, 13 tags, and a suggested price range — using the Seerxo CLI. Use whenever the user wants Etsy SEO, an Etsy product listing, product tags, or a title/description for something they sell on Etsy.
+description: Generate SEO-optimized Etsy listings — title, description, and 13 tags — using the Seerxo CLI. Use whenever the user wants Etsy SEO, an Etsy product listing, product tags, or a title/description for something they sell on Etsy.
 ---
 
 # Seerxo · Etsy SEO
 
-Produce a complete, Etsy-ready listing (title, description, 13 tags, suggested price)
+Produce a complete, Etsy-ready listing (title, description, and 13 tags)
 from a short product description by calling the Seerxo CLI. Do not hand-write listings —
 always call the CLI so output stays on-quota and consistent with the Seerxo web app,
 dashboard, and MCP server (they all share the same credits).
@@ -33,16 +33,19 @@ The command prints JSON shaped like:
 ```json
 {
   "title": "…",
+  "title_alternatives": ["…", "…"],
   "description": "…",
   "tags": ["…", "…"],
-  "suggested_price_range": "$28-$45",
+  "features": ["…"],
+  "target_keywords": ["…"],
+  "suggested_attributes": { "occasion": "…", "style": "…", "color": "…", "material": "…", "recipient": "…" },
   "usage": { "current": 3, "limit": 300, "remaining": 297 }
 }
 ```
 
-Present it back as: the title (under 140 chars, the Etsy limit), the description, the
-13 tags (as a list or comma-separated), and the suggested price. Mention remaining
-credits from `usage` when present.
+Present the title (under 140 chars, the Etsy limit), the description, and the 13 tags
+(as a list or comma-separated). Surface `title_alternatives` and `suggested_attributes`
+only if the user asks. Mention remaining credits from `usage` when present.
 
 ## If the CLI is missing or not signed in
 
