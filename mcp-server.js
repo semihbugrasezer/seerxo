@@ -368,6 +368,7 @@ const printUsage = () => {
       `  seerxo configure [--email you@example.com --api-key keyId.secret --host https://api.seerxo.com]\n` +
       `  seerxo quota        # show remaining credits\n` +
       `  seerxo generate --product \"...\" [--category \"...\"] [--json]\n` +
+      `  seerxo skill add|remove|path [--project]   # Claude Code skill\n` +
       `  seerxo update|upgrade   # update CLI to latest\n` +
       `  seerxo --help           # show this message\n` +
       `  seerxo --version        # show version\n\n` +
@@ -420,6 +421,66 @@ const printCliBanner = () => {
       width,
     })
   );
+};
+
+const SKILL_NAME = 'seerxo-etsy-seo';
+const bundledSkillUrl = new URL('./skills/seerxo-etsy-seo/SKILL.md', import.meta.url);
+
+const skillTargetDir = (projectScope) =>
+  projectScope
+    ? path.join(process.cwd(), '.claude', 'skills', SKILL_NAME)
+    : path.join(os.homedir(), '.claude', 'skills', SKILL_NAME);
+
+const printSkillUsage = () => {
+  console.log(
+    'Usage:\n' +
+      '  seerxo skill add [--project]      # install the Claude Code skill\n' +
+      '  seerxo skill remove [--project]   # remove it\n' +
+      '  seerxo skill path [--project]     # print the install path\n\n' +
+      'Default scope is your user config (~/.claude/skills). Use --project for the current repo.'
+  );
+};
+
+const runSkillCommand = async (extraArgs = []) => {
+  const action = normalizeCommandName(extraArgs[0]) || 'add';
+  const projectScope = extraArgs.includes('--project');
+  const targetDir = skillTargetDir(projectScope);
+  const targetPath = path.join(targetDir, 'SKILL.md');
+  const scopeLabel = projectScope ? 'project (.claude/skills)' : 'user (~/.claude/skills)';
+
+  if (action === 'path') {
+    console.log(targetPath);
+    return;
+  }
+
+  if (action === 'remove' || action === 'rm' || action === 'uninstall') {
+    try {
+      await fsPromises.rm(targetDir, { recursive: true, force: true });
+      console.log(`Removed Seerxo skill from ${scopeLabel}.`);
+    } catch (error) {
+      console.error(`Failed to remove skill: ${error.message}`);
+      process.exitCode = 1;
+    }
+    return;
+  }
+
+  if (action === 'add' || action === 'install') {
+    try {
+      const contents = await fsPromises.readFile(bundledSkillUrl, 'utf8');
+      await fsPromises.mkdir(targetDir, { recursive: true });
+      await fsPromises.writeFile(targetPath, contents, 'utf8');
+      console.log(`Installed Seerxo Etsy SEO skill to ${scopeLabel}.`);
+      console.log(`  ${targetPath}`);
+      console.log('Restart Claude Code, then ask: "Generate an Etsy listing for ...".');
+      console.log('Tip: run "seerxo login" once so the skill can generate on your account.');
+    } catch (error) {
+      console.error(`Failed to install skill: ${error.message}`);
+      process.exitCode = 1;
+    }
+    return;
+  }
+
+  printSkillUsage();
 };
 
 const runSelfUpdate = () => {
@@ -1019,6 +1080,11 @@ export async function handleCli(subArgs) {
       process.exitCode = 1;
       return;
     }
+    return;
+  }
+
+  if (sub === 'skill') {
+    await runSkillCommand(subArgs.slice(1));
     return;
   }
 

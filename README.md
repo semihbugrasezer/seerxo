@@ -18,7 +18,7 @@ Generate perfect SEO titles, descriptions, and tags in seconds
 
 ## 🎯 What is this?
 
-A Claude Desktop integration that generates complete, SEO-optimized Etsy product listings instantly. Perfect for Etsy sellers who want to:
+A tool that generates complete, SEO-optimized Etsy product listings instantly. Use it **three ways from one package** — a **CLI**, a **Claude Code skill**, or an **MCP server** for Claude Desktop. Perfect for Etsy sellers who want to:
 
 - ✅ Save 3+ hours per product listing
 - ✅ Rank higher in Etsy search results
@@ -136,6 +136,37 @@ Generate an Etsy listing for my handmade ceramic coffee mug
 **Premium:** Unlimited generations - [Upgrade at seerxo.com](https://www.seerxo.com)
 
 > Note: The previous package `seerxo-mcp` is deprecated. Use `npm install -g seerxo`.
+
+### C) Claude Code Skill
+
+Add Seerxo as a [Claude Code](https://claude.com/claude-code) skill so you can ask for
+Etsy listings right inside Claude Code — it drives the CLI for you.
+
+```bash
+# install the CLI (once) and sign in
+npm install -g seerxo
+seerxo login
+
+# add the skill (user-level, all projects)
+seerxo skill add
+# …or scope it to the current repo only
+seerxo skill add --project
+```
+
+No global install needed? Run it straight from npx:
+
+```bash
+npx seerxo skill add
+```
+
+Then restart Claude Code and ask:
+
+```
+Generate an Etsy listing for my handmade ceramic coffee mug
+```
+
+Remove it anytime with `seerxo skill remove` (add `--project` for the repo-scoped copy).
+The skill installs to `~/.claude/skills/seerxo-etsy-seo/` (or `./.claude/skills/…` with `--project`).
 
 ---
 
