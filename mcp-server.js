@@ -828,9 +828,6 @@ function printSeoResult(productName, result) {
         '',
         chalk.bold('Tags:'),
         result.tags.join(', '),
-        '',
-        chalk.bold('Suggested Price:'),
-        result.suggested_price_range,
       ].join('\n'),
       {
         padding: 1,
@@ -1062,9 +1059,6 @@ export async function handleCli(subArgs) {
               '',
               chalk.bold('Tags:'),
               result.tags.join(', '),
-              '',
-              chalk.bold('Suggested Price:'),
-              result.suggested_price_range,
             ].join('\n'),
             {
               padding: 1,
@@ -1200,11 +1194,9 @@ export function startMcpServer() {
                 content: [
                   {
                     type: 'text',
-                    text: `# Etsy SEO Results for "${toolArgs.product_name}"\n\n## 📝 SEO Title\n${result.title}\n\n## 📄 Product Description\n${result.description}\n\n## 🏷️ Tags (15)\n${result.tags.join(
+                    text: `# Etsy SEO Results for "${toolArgs.product_name}"\n\n## 📝 SEO Title\n${result.title}\n\n## 📄 Product Description\n${result.description}\n\n## 🏷️ Tags (13)\n${result.tags.join(
                       ', '
-                    )}\n\n## 💰 Suggested Price\n${
-                      result.suggested_price_range
-                    }${usageInfo}`,
+                    )}${usageInfo}`,
                   },
                 ],
               },
