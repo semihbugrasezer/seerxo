@@ -7,7 +7,7 @@
 [![npm](https://img.shields.io/npm/v/seerxo?color=a78bfa&label=npm)](https://www.npmjs.com/package/seerxo)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-blue)](https://modelcontextprotocol.io)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitHub stars](https://img.shields.io/github/stars/semihbugrasezer/etsy-seo-mcp?style=social)](https://github.com/semihbugrasezer/etsy-seo-mcp)
+[![GitHub stars](https://img.shields.io/github/stars/semihbugrasezer/seerxo?style=social)](https://github.com/semihbugrasezer/seerxo)
 
 ### Type what you sell. Get the whole listing.
 
@@ -152,7 +152,7 @@ Both plans include every channel — CLI, Claude Desktop, Claude Code skill, and
 
 ## 🤝 Support
 
-[GitHub Issues](https://github.com/semihbugrasezer/etsy-seo-mcp/issues) ·
+[GitHub Issues](https://github.com/semihbugrasezer/seerxo/issues) ·
 [info@seerxo.com](mailto:info@seerxo.com) · [seerxo.com](https://www.seerxo.com)
 
 > The npm package is **`seerxo`** — the old `seerxo-mcp` package is deprecated
