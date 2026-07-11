@@ -820,6 +820,7 @@ async function callSeerxoV1(pathname, payload) {
 // Map MCP tool arguments onto the /v1 audit request body.
 export function buildListingPayload(toolArgs = {}) {
   const payload = {};
+  if (toolArgs.seed) payload.seed = toolArgs.seed;
   if (toolArgs.product_name) payload.productName = toolArgs.product_name;
   if (toolArgs.title) payload.title = toolArgs.title;
   if (toolArgs.description) payload.description = toolArgs.description;
@@ -848,6 +849,19 @@ const LISTING_INPUT_PROPERTIES = {
 };
 
 export const LISTING_TOOLS = [
+  {
+    name: 'seerxo_suggest_keywords',
+    description:
+      'Get ranked Etsy keyword suggestions for a product or seed phrase, sampled from Etsy\'s own search autocomplete (relative demand rank, never fabricated volumes). Each keyword comes with a placement recommendation (title / tags / description) and whether the listing already uses it. Pass the listing fields too when you have them for better placement advice.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        seed: { type: 'string', description: 'Seed phrase to expand (e.g. "ceramic mug"). Falls back to product_name or title.' },
+        ...LISTING_INPUT_PROPERTIES,
+      },
+      required: [],
+    },
+  },
   {
     name: 'seerxo_analyze_listing',
     description:
@@ -898,6 +912,17 @@ export function formatOptimizeResult(data) {
     `## Title\n${optimized.title}\n\n` +
     `## Description\n${optimized.description}\n\n` +
     `## Tags (${(optimized.tags || []).length})\n${(optimized.tags || []).join(', ')}`
+  );
+}
+
+export function formatKeywordsResult(data) {
+  const rows = (data.keywords || [])
+    .map((k) => `${k.demandRank}. **${k.keyword}** → ${k.placement}${k.inListing ? ' (already in listing)' : ''}`)
+    .join('\n');
+  return (
+    `# Keyword Suggestions for "${data.seed}"\n\n` +
+    `Source: Etsy search autocomplete (relative demand order) · confidence: ${data.confidence}\n\n` +
+    `${rows || 'No suggestions found for this seed.'}`
   );
 }
 
@@ -1318,6 +1343,13 @@ export function startMcpServer() {
             };
 
             console.log(JSON.stringify(response));
+          } else if (name === 'seerxo_suggest_keywords') {
+            const data = await callSeerxoV1('/v1/keywords', buildListingPayload(toolArgs));
+            console.log(JSON.stringify({
+              jsonrpc: '2.0',
+              id: request.id,
+              result: { content: [{ type: 'text', text: formatKeywordsResult(data) }] },
+            }));
           } else if (name === 'seerxo_analyze_listing' || name === 'seerxo_optimize_listing') {
             const isAnalyze = name === 'seerxo_analyze_listing';
             const data = await callSeerxoV1(
