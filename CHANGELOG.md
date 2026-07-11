@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/semihbugrasezer/seerxo/compare/v1.4.0...v1.5.0) (2026-07-11)
+
+
+### Features
+
+* **mcp:** seerxo_suggest_keywords tool wrapping /v1/keywords ([c3a6ed0](https://github.com/semihbugrasezer/seerxo/commit/c3a6ed09623e52d2260b83e199b7e68543d832ea))
+
 # [1.4.0](https://github.com/semihbugrasezer/seerxo/compare/v1.3.0...v1.4.0) (2026-07-11)
 
 
