@@ -306,7 +306,7 @@ const args = process.argv.slice(2);
 const invokedPath = process.argv[1] || '';
 const invokedAs = path.basename(invokedPath);
 const invokedAsMcp =
-  invokedAs === 'seerxo-mcp' || invokedAs === 'etsy-seo-mcp' || invokedAs === 'seerxo';
+  invokedAs === 'seerxo-mcp' || invokedAs === 'seerxo';
 const invokedAsSeerxo = invokedAs === 'seerxo';
 
 function isSafeHttpUrl(value) {
