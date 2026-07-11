@@ -10,7 +10,7 @@
   },
   "scripts": {
     "start": "node bin/seerxo.js",
-    "test": "NODE_ENV=test node --test tests/",
+    "test": "NODE_ENV=test node --test",
     "lint": "node --check mcp-server.js && node --check utils.js && node --check scripts/validate-package-files.mjs",
     "build": "node scripts/validate-package-files.mjs"
   },
