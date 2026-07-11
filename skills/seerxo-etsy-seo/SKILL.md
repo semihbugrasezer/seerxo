@@ -1,6 +1,6 @@
 ---
 name: seerxo-etsy-seo
-description: Generate or optimize a complete, copy-paste-ready Etsy listing — front-loaded title (+ A/B variants), hook-first description, 13 search-optimized tags, and the Etsy listing attributes to set — by calling the Seerxo CLI. Use whenever the user wants Etsy SEO, an Etsy listing, product tags, a title/description, or wants to improve/rank an existing Etsy listing.
+description: Generate or optimize a complete, copy-paste-ready Etsy listing — front-loaded title (+ A/B variants), hook-first description, 13 search-optimized tags, and the Etsy listing attributes to set — by calling the Seerxo CLI. Accepts a product phrase or a pasted Etsy listing URL. Use whenever the user wants Etsy SEO, an Etsy listing, product tags, a title/description, or wants to improve/rank an existing Etsy listing.
 ---
 
 # Seerxo · Etsy SEO
@@ -17,6 +17,11 @@ product description, Etsy tags, or to optimize / rank-up an existing Etsy listin
 ## Generate
 
 1. Build the product phrase from the user's own words — keep their wording, don't rewrite it.
+   - **Pasted Etsy listing URL?** If it contains a title slug
+     (`etsy.com/listing/123/boho-macrame-wall-hanging`), turn the slug into the product
+     phrase (`boho macrame wall hanging`). If it's a bare link with no slug
+     (`shopname.etsy.com/listing/123`), ask the user for the listing title instead of
+     calling the CLI — the API rejects bare URLs, so the call would only waste time.
 2. Infer an Etsy `--category` only when it's obvious, to sharpen keyword matching:
    mug/candle/decor → `"Home & Living"`, necklace/ring → `"Jewelry"`, shirt/hoodie →
    `"Clothing"`, sticker → `"Craft Supplies"`, card/print → `"Paper & Party Supplies"`,
@@ -56,7 +61,10 @@ exact labels and keep it scannable:
 - **Etsy attributes** — when present, list `suggested_attributes` as `Field: value`
   (Occasion, Style, Color, Material, Recipient) so the seller can fill Etsy's attribute
   dropdowns — these boost filter visibility.
+- **Features** — when present, list `features` as bullets (paste-ready listing highlights).
 - **Targets** — when present, list `target_keywords` (what the listing is built to rank for).
+- **Shipping tip & cross-sell** — when the JSON carries `shipping_tip` or `cross_sell`,
+  surface each as a one-line note; sellers act on these.
 - **Credits** — from `usage`, say "X of Y generations left this month."
 
 Ship exactly what the CLI returned — do not add, drop, or rewrite tags yourself. The CLI
