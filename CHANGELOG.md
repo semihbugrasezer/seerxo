@@ -1,3 +1,15 @@
+# [1.4.0](https://github.com/semihbugrasezer/seerxo/compare/v1.3.0...v1.4.0) (2026-07-11)
+
+
+### Bug Fixes
+
+* **ci:** run node --test with default discovery, Node 22 globs choke on tests/ ([fba30fd](https://github.com/semihbugrasezer/seerxo/commit/fba30fd8bf2e48bb7d4d1116335fcea29a928831))
+
+
+### Features
+
+* **mcp:** seerxo_analyze_listing and seerxo_optimize_listing tools ([f8af093](https://github.com/semihbugrasezer/seerxo/commit/f8af09340b833d32f775501fd519384c86e5e4b5))
+
 # [1.3.0](https://github.com/semihbugrasezer/seerxo/compare/v1.2.1...v1.3.0) (2026-06-29)
 
 
