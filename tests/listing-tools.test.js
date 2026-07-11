@@ -5,12 +5,13 @@ import {
   buildListingPayload,
   formatAnalyzeResult,
   formatOptimizeResult,
+  formatKeywordsResult,
 } from '../mcp-server.js';
 
 describe('listing tool definitions', () => {
-  it('exposes both tools with agent-usable schemas', () => {
+  it('exposes the listing tools with agent-usable schemas', () => {
     const names = LISTING_TOOLS.map((t) => t.name);
-    assert.deepStrictEqual(names, ['seerxo_analyze_listing', 'seerxo_optimize_listing']);
+    assert.deepStrictEqual(names, ['seerxo_suggest_keywords', 'seerxo_analyze_listing', 'seerxo_optimize_listing']);
     for (const tool of LISTING_TOOLS) {
       assert.ok(tool.description.length > 50, 'description should tell the agent when/how to call');
       assert.strictEqual(tool.inputSchema.type, 'object');
@@ -81,6 +82,25 @@ describe('formatters', () => {
     assert.ok(text.includes('still open: tags_multiword'));
     assert.ok(text.includes('New Title'));
     assert.ok(text.includes('a b, c d'));
+  });
+
+  it('renders keyword suggestions with rank, placement, and confidence', () => {
+    const text = formatKeywordsResult({
+      seed: 'ceramic mug',
+      confidence: 'medium',
+      keywords: [
+        { keyword: 'ceramic mug set', demandRank: 1, placement: 'title', inListing: false },
+        { keyword: 'ceramic mug handmade', demandRank: 2, placement: 'description', inListing: true },
+      ],
+    });
+    assert.ok(text.includes('"ceramic mug"'));
+    assert.ok(text.includes('confidence: medium'));
+    assert.ok(text.includes('1. **ceramic mug set** → title'));
+    assert.ok(text.includes('(already in listing)'));
+  });
+
+  it('maps seed onto the keywords payload', () => {
+    assert.deepStrictEqual(buildListingPayload({ seed: 'ceramic mug' }), { seed: 'ceramic mug' });
   });
 
   it('flags the fallback case honestly', () => {
