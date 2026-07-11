@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="280" viewBox="0 0 1200 280" role="img" aria-label="Seerxo — Etsy SEO in seconds">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f0f14"/>
+      <stop offset="0.55" stop-color="#16121f"/>
+      <stop offset="1" stop-color="#1d1128"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#a78bfa"/>
+      <stop offset="0.5" stop-color="#f0abfc"/>
+      <stop offset="1" stop-color="#fbbf24"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.82" cy="0.2" r="0.7">
+      <stop offset="0" stop-color="#a78bfa" stop-opacity="0.28"/>
+      <stop offset="1" stop-color="#a78bfa" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="280" rx="16" fill="url(#bg)"/>
+  <rect width="1200" height="280" rx="16" fill="url(#glow)"/>
+
+  <!-- sparkle marks -->
+  <g fill="#f0abfc" opacity="0.9">
+    <path d="M985 62 l6 16 16 6 -16 6 -6 16 -6 -16 -16 -6 16 -6 z"/>
+  </g>
+  <g fill="#a78bfa" opacity="0.7">
+    <path d="M1080 150 l4 11 11 4 -11 4 -4 11 -4 -11 -11 -4 11 -4 z"/>
+  </g>
+  <g fill="#fbbf24" opacity="0.6">
+    <path d="M930 190 l3 8 8 3 -8 3 -3 8 -3 -8 -8 -3 8 -3 z"/>
+  </g>
+
+  <text x="72" y="128" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="64" font-weight="800" fill="#fafafa" letter-spacing="-1">
+    Seerxo
+  </text>
+  <text x="72" y="172" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="26" font-weight="500" fill="url(#accent)">
+    Etsy SEO in seconds
+  </text>
+  <text x="72" y="212" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="18" fill="#a1a1aa">
+    Front-loaded title · hook-first description · all 13 tags · Etsy attributes
+  </text>
+
+  <!-- terminal chip -->
+  <g font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="15">
+    <rect x="700" y="86" width="428" height="110" rx="10" fill="#09090b" stroke="#3f3f46" stroke-width="1"/>
+    <circle cx="722" cy="108" r="5" fill="#f87171"/>
+    <circle cx="740" cy="108" r="5" fill="#fbbf24"/>
+    <circle cx="758" cy="108" r="5" fill="#34d399"/>
+    <text x="722" y="146" fill="#71717a">$</text>
+    <text x="738" y="146" fill="#e4e4e7">seerxo generate --product</text>
+    <text x="722" y="174" fill="#a78bfa">"handmade ceramic mug"</text>
+  </g>
+</svg>

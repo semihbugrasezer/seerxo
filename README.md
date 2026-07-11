@@ -1,58 +1,80 @@
-# Seerxo — Etsy SEO Generator
-
 <div align="center">
 
-[![npm](https://img.shields.io/npm/v/seerxo)](https://www.npmjs.com/package/seerxo)
+<img src="assets/banner.svg" alt="Seerxo — Etsy SEO in seconds" width="100%" />
+
+<br/><br/>
+
+[![npm](https://img.shields.io/npm/v/seerxo?color=a78bfa&label=npm)](https://www.npmjs.com/package/seerxo)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-blue)](https://modelcontextprotocol.io)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitHub](https://img.shields.io/github/stars/semihbugrasezer/etsy-seo-mcp?style=social)](https://github.com/semihbugrasezer/etsy-seo-mcp)
+[![GitHub stars](https://img.shields.io/github/stars/semihbugrasezer/etsy-seo-mcp?style=social)](https://github.com/semihbugrasezer/etsy-seo-mcp)
 
-**AI-powered Etsy listings — SEO title, description, and all 13 tags in seconds.**
+### Type what you sell. Get the whole listing.
 
-One `npm` package, four ways to use it: **CLI**, **Claude Desktop (MCP)**,
-**Claude Code skill**, or the **web app**.
+Front-loaded SEO title (+ A/B variants) · hook-first description · all **13 tags** ·
+Etsy attributes — generated in seconds, ready to paste.
 
-[seerxo.com](https://www.seerxo.com) • [Quick start](#quick-start) • [What you get](#what-you-get)
+**[Try it free →](https://www.seerxo.com)**&ensp;·&ensp;[Quick start](#-quick-start)&ensp;·&ensp;[Sample output](#-see-it-work)
 
 </div>
 
 ---
 
-## What is this?
+## ⚡ See it work
 
-Seerxo turns a short product phrase into a complete, copy-paste-ready Etsy listing:
-a front-loaded title (plus A/B variants), a hook-first description, 13
-search-optimized tags, and the Etsy attributes to set. All channels share one
-account and one credit pool.
+**You type:**
 
-## Quick start
+```bash
+seerxo generate --product "handmade ceramic coffee mug, speckled glaze, 12oz"
+```
 
-### CLI
+**You get:**
+
+```
+TITLE   Handmade Ceramic Coffee Mug | Artisan Pottery | Unique Kitchen Gift | Microwave Safe
+
+TAGS    handmade mug · ceramic coffee cup · pottery mug · artisan mug · unique gift
+        coffee lover gift · handcrafted · kitchen decor · tea cup · housewarming gift
+        birthday present · ceramic pottery · handmade gift
+
+DESCRIPTION
+Elevate your morning coffee ritual with this beautifully handcrafted ceramic mug.
+Each piece is lovingly made by skilled artisans, ensuring no two mugs are exactly
+alike. Featuring a comfortable ergonomic handle and smooth glazed finish. …
+
++ 2 A/B title variants · Etsy attributes · target keywords · shipping tip · cross-sell idea
+```
+
+Every field respects Etsy's rules out of the box: title ≤140 chars, exactly 13 tags,
+each tag ≤20 chars, lowercase, no duplicates.
+
+## 🧰 Use it where you already work
+
+| Channel | Best for | Get started |
+|---|---|---|
+| 🖥️ **CLI** | Terminal lovers, scripts, batch work | `npm i -g seerxo` |
+| 🤖 **Claude Desktop (MCP)** | "Generate a listing" mid-conversation | [Setup ↓](#claude-desktop-mcp) |
+| 🧑‍💻 **Claude Code skill** | Listings without leaving your editor | `seerxo skill add` |
+| 🌐 **[Web app](https://www.seerxo.com)** | Zero install + free [SEO Score audit](https://www.seerxo.com/audit) | Open and type |
+| 🧩 **[Chrome extension](https://github.com/semihbugrasezer/seerxo-chrome-extension)** | Optimize on the Etsy page itself | Early preview |
+
+One account, one credit pool — every channel shares it.
+
+## 🚀 Quick start
 
 ```bash
 npm install -g seerxo
-seerxo login          # Google sign-in in your browser; saves your API key locally
+seerxo login     # Google sign-in in your browser; API key is saved for you
+seerxo generate --product "boho macrame wall hanging" --category "Home & Living"
 ```
 
-Generate a listing:
+Prefer interactive? Just run `seerxo` and type your product
+(add a category with `|`, e.g. `Boho bedroom wall art set | Wall Art`).
+Add `--json` to any generate for machine-readable output.
 
-```bash
-seerxo generate --product "handmade ceramic coffee mug, speckled glaze, 12oz" --category "Home & Living"
-```
-
-Add `--json` for machine-readable output, or just run `seerxo` for interactive mode
-(type a product description, add a category with `|`, e.g.
-`Boho bedroom wall art set | Wall Art`).
-
-Already have an API key? Skip the browser:
-
-```bash
-seerxo configure --email you@example.com --api-key keyId.secret
-```
-
-Useful commands: `seerxo status` (config & key state), `seerxo logout`.
-
-### Claude Desktop (MCP)
+<details id="claude-desktop-mcp">
+<summary><b>🤖 Claude Desktop (MCP) setup</b></summary>
+<br/>
 
 1. Install the CLI and sign in (`seerxo login`) as above.
 2. Add the MCP server to your Claude Desktop config:
@@ -63,26 +85,24 @@ Useful commands: `seerxo status` (config & key state), `seerxo logout`.
    ```json
    {
      "mcpServers": {
-       "seerxo": {
-         "command": "seerxo-mcp"
-       }
+       "seerxo": { "command": "seerxo-mcp" }
      }
    }
    ```
 
-   Credentials are read from `~/.seerxo-mcp/config.json` (written by `seerxo login`).
-   You can override with `SEERXO_EMAIL` / `SEERXO_API_KEY` env vars in the config
-   instead. The config file is plaintext — keep it on single-user machines and
-   restrict permissions:
-   `chmod 700 ~/.seerxo-mcp && chmod 600 ~/.seerxo-mcp/config.json`.
+   Credentials are read from `~/.seerxo-mcp/config.json` (written by `seerxo login`);
+   you can override with `SEERXO_EMAIL` / `SEERXO_API_KEY` env vars. The file is
+   plaintext — keep it on single-user machines:
+   `chmod 700 ~/.seerxo-mcp && chmod 600 ~/.seerxo-mcp/config.json`
 
-3. Restart Claude Desktop, then ask:
+3. Restart Claude Desktop and ask:
+   *"Generate an Etsy listing for my handmade ceramic coffee mug"*
 
-   ```
-   Generate an Etsy listing for my handmade ceramic coffee mug
-   ```
+</details>
 
-### Claude Code skill
+<details>
+<summary><b>🧑‍💻 Claude Code skill setup</b></summary>
+<br/>
 
 ```bash
 npm install -g seerxo && seerxo login
@@ -91,70 +111,54 @@ seerxo skill add --project  # …or current repo only
 ```
 
 Restart Claude Code and ask for an Etsy listing — the skill drives the CLI for you.
-Remove with `seerxo skill remove` (add `--project` for the repo-scoped copy).
-No global install? `npx seerxo skill add` works too.
+Remove anytime with `seerxo skill remove`. No global install? `npx seerxo skill add`.
 
-### Web app & Chrome extension
+</details>
 
-- **[seerxo.com](https://www.seerxo.com)** — no installation, instant results,
-  plus a free [SEO Score audit](https://www.seerxo.com/audit) for existing listings.
-- **[Chrome extension](https://github.com/semihbugrasezer/seerxo-chrome-extension)** —
-  generate optimized content directly on any Etsy listing page (early preview).
+<details>
+<summary><b>🔑 Already have an API key?</b></summary>
+<br/>
 
-## What you get
+```bash
+seerxo configure --email you@example.com --api-key keyId.secret
+```
 
-Every generation returns:
+Check state anytime with `seerxo status`; sign out with `seerxo logout`.
+
+</details>
+
+## 📦 What you get
 
 | Field | Details |
 |---|---|
-| **Title** | ≤140 chars (Etsy limit), primary keywords front-loaded |
+| **Title** | ≤140 chars, primary keywords front-loaded for Etsy search |
 | **A/B titles** | Alternative titles for split-testing |
 | **Description** | Hook-first opening, features, usage scenarios, call-to-action |
-| **13 tags** | Each ≤20 chars, lowercase, deduplicated, mix of broad + specific |
-| **Attributes** | Occasion, style, color, material, recipient — for Etsy's filter dropdowns |
+| **13 tags** | Each ≤20 chars, lowercase, deduplicated, broad + specific mix |
+| **Attributes** | Occasion, style, color, material, recipient — Etsy's filter dropdowns |
 | **Extras** | Target keywords, shipping tip, cross-sell suggestion |
 
-### Sample output
+> 💡 **Tip:** you can paste an Etsy listing URL that contains a title slug
+> (`etsy.com/listing/123/boho-macrame-wall-hanging`) — the product name is derived
+> from it. Bare links without a slug can't be read; paste the listing title instead.
 
-**Input:** `handmade ceramic coffee mug`
+## 💳 Pricing
 
-```
-TITLE
-Handmade Ceramic Coffee Mug | Artisan Pottery | Unique Kitchen Gift | Microwave Safe
+| | Free | Premium |
+|---|---|---|
+| Generations | **5** / month | up to **300** / month |
+| Channels | all | all |
+| | | [Upgrade →](https://www.seerxo.com/pricing) |
 
-DESCRIPTION
-Elevate your morning coffee ritual with this beautifully handcrafted ceramic mug.
-Each piece is lovingly made by skilled artisans, ensuring no two mugs are exactly
-alike. Featuring a comfortable ergonomic handle and smooth glazed finish.
+## 🤝 Support
 
-TAGS
-handmade mug, ceramic coffee cup, pottery mug, artisan mug, unique gift,
-coffee lover gift, handcrafted, kitchen decor, tea cup, housewarming gift,
-birthday present, ceramic pottery, handmade gift
-```
+[GitHub Issues](https://github.com/semihbugrasezer/etsy-seo-mcp/issues) ·
+[info@seerxo.com](mailto:info@seerxo.com) · [seerxo.com](https://www.seerxo.com)
 
-## Pricing
+> The npm package is **`seerxo`** — the old `seerxo-mcp` package is deprecated
+> (the `seerxo-mcp` *binary* still ships inside `seerxo` for Claude Desktop).
 
-| Plan | Generations |
-|---|---|
-| Free | 5 / month |
-| Premium | up to 300 / month — [upgrade at seerxo.com](https://www.seerxo.com/pricing) |
-
-## Notes
-
-- The npm package is **`seerxo`**; the old `seerxo-mcp` package is deprecated
-  (the `seerxo-mcp` *binary* still ships inside `seerxo` for Claude Desktop).
-- You can paste an Etsy listing URL that contains a title slug
-  (`etsy.com/listing/123/boho-macrame-wall-hanging`) — the title is derived from it.
-  Bare links without a slug can't be read; paste the listing title instead.
-
-## Support
-
-- [GitHub Issues](https://github.com/semihbugrasezer/etsy-seo-mcp/issues)
-- [info@seerxo.com](mailto:info@seerxo.com)
-- [seerxo.com](https://www.seerxo.com)
-
-## License
+## 📝 License
 
 MIT — see [LICENSE](LICENSE).
 
@@ -162,8 +166,8 @@ MIT — see [LICENSE](LICENSE).
 
 <div align="center">
 
-**Built for Etsy sellers by Seerxo**
+**Built for Etsy sellers by [Seerxo](https://www.seerxo.com)**
 
-[⭐ Star on GitHub](https://github.com/semihbugrasezer/etsy-seo-mcp) • [Try it now](https://www.seerxo.com)
+⭐ Star the repo if it saves you listing time — it helps other sellers find it.
 
 </div>
