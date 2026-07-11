@@ -146,9 +146,9 @@ Check state anytime with `seerxo status`; sign out with `seerxo logout`.
 
 | | Free | Premium |
 |---|---|---|
-| Generations | **5** / month | up to **300** / month |
-| Channels | all | all |
-| | | [Upgrade →](https://www.seerxo.com/pricing) |
+| Generations | **5** / month | up to **300** / month — [Upgrade →](https://www.seerxo.com/pricing) |
+
+Both plans include every channel — CLI, Claude Desktop, Claude Code skill, and the web app.
 
 ## 🤝 Support
 
