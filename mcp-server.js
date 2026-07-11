@@ -787,6 +787,120 @@ async function generateEtsySEO(productName, category = '') {
   return result;
 }
 
+// Shared caller for the versioned REST API (/v1/*) — same HMAC scheme as
+// /mcp/generate. The response contracts live server-side; tools wrap them 1:1.
+async function callSeerxoV1(pathname, payload) {
+  if (!apiKeyHeader || !apiKeySecret) {
+    throw new Error('API key is not set. Run "seerxo configure" first.');
+  }
+
+  const { signature, timestamp } = generateSignature(payload);
+  try {
+    const data = await fetchJson(`${apiHost}${pathname}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': `seerxo/${clientVersion}`,
+        'X-MCP-Signature': signature,
+        'X-MCP-Timestamp': timestamp.toString(),
+        'X-MCP-Version': clientVersion,
+        'X-MCP-API-Key': apiKeyHeader,
+      },
+      body: JSON.stringify(payload),
+    });
+    if (!data.success) {
+      throw new Error(data.error || 'Request failed');
+    }
+    return data.data;
+  } catch (error) {
+    throw new Error(formatApiErrorMessage(error.message, error.status), { cause: error });
+  }
+}
+
+// Map MCP tool arguments onto the /v1 audit request body.
+export function buildListingPayload(toolArgs = {}) {
+  const payload = {};
+  if (toolArgs.product_name) payload.productName = toolArgs.product_name;
+  if (toolArgs.title) payload.title = toolArgs.title;
+  if (toolArgs.description) payload.description = toolArgs.description;
+  if (Array.isArray(toolArgs.tags)) payload.tags = toolArgs.tags;
+  if (toolArgs.url) payload.url = toolArgs.url;
+  return payload;
+}
+
+const LISTING_INPUT_PROPERTIES = {
+  title: { type: 'string', description: 'The listing title, exactly as it appears on Etsy.' },
+  description: { type: 'string', description: 'The listing description.' },
+  tags: {
+    type: 'array',
+    items: { type: 'string' },
+    description: 'The listing tags (up to 13).',
+  },
+  product_name: {
+    type: 'string',
+    description: 'What the product is (e.g. "handmade ceramic coffee mug"). Improves keyword-coverage checks.',
+  },
+  url: {
+    type: 'string',
+    description:
+      'Optional Etsy listing URL. A URL alone is NOT enough — Etsy blocks server-side fetching, so always pass the listing fields you can see. The URL adds the product name from its slug.',
+  },
+};
+
+export const LISTING_TOOLS = [
+  {
+    name: 'seerxo_analyze_listing',
+    description:
+      'Audit an existing Etsy listing. Returns an SEO score (0-100) with per-field sub-scores, ranked weak points (each with severity and a concrete fix), missing keywords, and tag-slot utilization. Call it with whatever listing fields are available (title, tags, description); at least one is required.',
+    inputSchema: { type: 'object', properties: LISTING_INPUT_PROPERTIES, required: [] },
+  },
+  {
+    name: 'seerxo_optimize_listing',
+    description:
+      'Rewrite an Etsy listing to fix its audit findings: improved title, description, and tag set, each mapped to the finding it resolves, with a before/after SEO score. Etsy limits (140-char title, 13 tags, 20 chars per tag) are enforced server-side and the result never scores below the original. Provide the current listing fields.',
+    inputSchema: { type: 'object', properties: LISTING_INPUT_PROPERTIES, required: [] },
+  },
+];
+
+export function formatAnalyzeResult(data) {
+  const s = data.subScores || {};
+  const weakPoints = (data.weakPoints || [])
+    .map((wp, i) => `${i + 1}. [${wp.severity}] (${wp.field}) ${wp.reason} — fix: ${wp.fix}`)
+    .join('\n');
+  const util = data.tagUtilization || {};
+  const utilNotes = [
+    util.duplicates?.length ? `duplicates: ${util.duplicates.join(', ')}` : '',
+    util.overLong?.length ? `over 20 chars: ${util.overLong.join(', ')}` : '',
+    util.tooBroad?.length ? `single-word (too broad): ${util.tooBroad.join(', ')}` : '',
+  ].filter(Boolean).join(' · ');
+
+  return (
+    `# Listing Audit\n\n` +
+    `**SEO Score: ${data.seoScore}/100** — title ${s.title}, tags ${s.tags}, description ${s.description}, completeness ${s.completeness}\n\n` +
+    `## Weak points\n${weakPoints || 'None — this listing passes every check.'}\n\n` +
+    `## Missing keywords\n${(data.missingKeywords || []).join(', ') || 'none'}\n\n` +
+    `## Tag slots\n${util.used}/${util.max} used${utilNotes ? ` (${utilNotes})` : ''}`
+  );
+}
+
+export function formatOptimizeResult(data) {
+  const before = data.before || {};
+  const after = data.after || {};
+  const optimized = data.optimized || {};
+  const fallbackNote = data.fallback
+    ? '\n\n> Note: the rewrite did not beat the original listing, so the original fields were kept.'
+    : '';
+
+  return (
+    `# Optimized Listing\n\n` +
+    `**SEO Score: ${before.seoScore} → ${after.seoScore}** · resolved ${data.resolved?.length ?? 0} finding(s)` +
+    `${data.unresolved?.length ? `, still open: ${data.unresolved.join(', ')}` : ''}${fallbackNote}\n\n` +
+    `## Title\n${optimized.title}\n\n` +
+    `## Description\n${optimized.description}\n\n` +
+    `## Tags (${(optimized.tags || []).length})\n${(optimized.tags || []).join(', ')}`
+  );
+}
+
 async function promptLoginIfNecessary() {
   if (!userEmail || !hasValidApiKey) {
     const rlLogin = readline.createInterface({ input, output });
@@ -1166,6 +1280,7 @@ export function startMcpServer() {
                     required: ['product_name'],
                   },
                 },
+                ...LISTING_TOOLS,
               ],
             },
           };
@@ -1197,6 +1312,27 @@ export function startMcpServer() {
                     text: `# Etsy SEO Results for "${toolArgs.product_name}"\n\n## 📝 SEO Title\n${result.title}\n\n## 📄 Product Description\n${result.description}\n\n## 🏷️ Tags (13)\n${result.tags.join(
                       ', '
                     )}${usageInfo}`,
+                  },
+                ],
+              },
+            };
+
+            console.log(JSON.stringify(response));
+          } else if (name === 'seerxo_analyze_listing' || name === 'seerxo_optimize_listing') {
+            const isAnalyze = name === 'seerxo_analyze_listing';
+            const data = await callSeerxoV1(
+              isAnalyze ? '/v1/analyze' : '/v1/optimize',
+              buildListingPayload(toolArgs)
+            );
+
+            const response = {
+              jsonrpc: '2.0',
+              id: request.id,
+              result: {
+                content: [
+                  {
+                    type: 'text',
+                    text: isAnalyze ? formatAnalyzeResult(data) : formatOptimizeResult(data),
                   },
                 ],
               },
