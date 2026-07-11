@@ -15,7 +15,7 @@ Please do not open a public GitHub issue for security vulnerabilities.
 
 Report security issues privately by emailing:
 
-**support@seerxo.com**
+**info@seerxo.com**
 
 Include as much detail as possible:
 
