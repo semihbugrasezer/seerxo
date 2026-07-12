@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/semihbugrasezer/seerxo/compare/v1.5.0...v1.6.0) (2026-07-12)
+
+
+### Features
+
+* **cli:** analyze, optimize, and keywords commands ([#73](https://github.com/semihbugrasezer/seerxo/issues/73)) ([621cc95](https://github.com/semihbugrasezer/seerxo/commit/621cc95c65a19ed407eaa44f8195fa85d0cc3a9b))
+
 # [1.5.0](https://github.com/semihbugrasezer/seerxo/compare/v1.4.0...v1.5.0) (2026-07-11)
 
 
