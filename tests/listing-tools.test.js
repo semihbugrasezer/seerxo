@@ -6,6 +6,7 @@ import {
   formatAnalyzeResult,
   formatOptimizeResult,
   formatKeywordsResult,
+  handleCli,
 } from '../mcp-server.js';
 
 describe('listing tool definitions', () => {
@@ -113,5 +114,40 @@ describe('formatters', () => {
       fallback: true,
     });
     assert.ok(text.includes('original fields were kept'));
+  });
+});
+
+describe('cli listing commands', () => {
+  const captureError = async (args) => {
+    const original = console.error;
+    const lines = [];
+    console.error = (...parts) => lines.push(parts.join(' '));
+    const exitBefore = process.exitCode;
+    try {
+      await handleCli(args);
+    } finally {
+      console.error = original;
+    }
+    const failed = process.exitCode === 1;
+    process.exitCode = exitBefore;
+    return { lines, failed };
+  };
+
+  it('rejects analyze without any listing input', async () => {
+    const { lines, failed } = await captureError(['analyze']);
+    assert.ok(failed);
+    assert.ok(lines.join(' ').includes('--title'));
+  });
+
+  it('treats audit as an alias for analyze', async () => {
+    const { lines, failed } = await captureError(['audit']);
+    assert.ok(failed);
+    assert.ok(lines.join(' ').includes('--title'));
+  });
+
+  it('rejects keywords without a seed', async () => {
+    const { lines, failed } = await captureError(['keywords']);
+    assert.ok(failed);
+    assert.ok(lines.join(' ').includes('--seed'));
   });
 });
