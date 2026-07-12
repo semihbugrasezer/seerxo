@@ -111,6 +111,7 @@ function normalizeCommandName(command) {
   const value = typeof command === 'string' ? command.trim().toLowerCase() : '';
   if (value === 'signin' || value === 'sign-in') return 'login';
   if (value === 'signout' || value === 'sign-out') return 'logout';
+  if (value === 'audit') return 'analyze';
   return value;
 }
 
@@ -368,6 +369,9 @@ const printUsage = () => {
       `  seerxo configure [--email you@example.com --api-key keyId.secret --host https://api.seerxo.com]\n` +
       `  seerxo quota        # show remaining credits\n` +
       `  seerxo generate --product \"...\" [--category \"...\"] [--json]\n` +
+      `  seerxo analyze  --title \"...\" [--tags \"a,b,c\" --description \"...\" --product \"...\"] [--json]\n` +
+      `  seerxo optimize --title \"...\" [--tags \"a,b,c\" --description \"...\" --product \"...\"] [--json]\n` +
+      `  seerxo keywords --seed \"ceramic mug\" [--title \"...\" --tags \"a,b,c\"] [--json]\n` +
       `  seerxo skill add|remove|path [--project]   # Claude Code skill\n` +
       `  seerxo update|upgrade   # update CLI to latest\n` +
       `  seerxo --help           # show this message\n` +
@@ -1210,6 +1214,53 @@ export async function handleCli(subArgs) {
       }
     } catch (error) {
       console.error(error.message || 'Content generation failed');
+      process.exitCode = 1;
+      return;
+    }
+    return;
+  }
+
+  if (sub === 'analyze' || sub === 'optimize' || sub === 'keywords') {
+    const jsonOutput = subArgs.includes('--json');
+    const flag = (name) => {
+      const index = subArgs.indexOf(`--${name}`);
+      return index !== -1 && subArgs[index + 1] ? subArgs[index + 1] : undefined;
+    };
+    const rawTags = flag('tags');
+    const payload = buildListingPayload({
+      seed: flag('seed'),
+      product_name: flag('product'),
+      title: flag('title'),
+      description: flag('description'),
+      tags: rawTags ? rawTags.split(',').map((tag) => tag.trim()).filter(Boolean) : undefined,
+      url: flag('url'),
+    });
+    if (Object.keys(payload).length === 0) {
+      console.error(
+        sub === 'keywords'
+          ? 'Missing input: pass --seed "ceramic mug" (or --product / --title).'
+          : `Missing input: pass at least one of --title / --tags / --description (tags are comma-separated).`
+      );
+      process.exitCode = 1;
+      return;
+    }
+    try {
+      const data = await callSeerxoV1(sub === 'keywords' ? '/v1/keywords' : `/v1/${sub}`, payload);
+      if (jsonOutput) {
+        console.log(JSON.stringify(data, null, 2));
+      } else {
+        const text =
+          sub === 'analyze'
+            ? formatAnalyzeResult(data)
+            : sub === 'optimize'
+              ? formatOptimizeResult(data)
+              : formatKeywordsResult(data);
+        console.log(
+          boxen(text, { padding: 1, borderColor: 'cyan', borderStyle: 'round', title: 'seerxo' })
+        );
+      }
+    } catch (error) {
+      console.error(error.message || `${sub} failed`);
       process.exitCode = 1;
       return;
     }

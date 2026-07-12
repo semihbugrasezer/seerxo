@@ -13,6 +13,7 @@
 
 Front-loaded SEO title (+ A/B variants) · hook-first description · all **13 tags** ·
 Etsy attributes — generated in seconds, ready to paste.
+Then keep improving: **score**, **fix**, and **keyword-mine** existing listings from the same CLI, MCP server, and Claude Code skill.
 
 **[Try it free →](https://www.seerxo.com)**&ensp;·&ensp;[Quick start](#-quick-start)&ensp;·&ensp;[Sample output](#-see-it-work)
 
@@ -68,9 +69,19 @@ seerxo login     # Google sign-in in your browser; API key is saved for you
 seerxo generate --product "boho macrame wall hanging" --category "Home & Living"
 ```
 
+Already have a listing? Score it, fix it, and mine keywords from the same CLI:
+
+```bash
+seerxo analyze  --title "Minimalist Mug" --tags "mug,gift" --description "..."   # SEO score + weak points
+seerxo optimize --title "Minimalist Mug" --tags "mug,gift" --description "..."   # guided rewrite, before/after score
+seerxo keywords --seed "ceramic mug"                                             # ranked Etsy autosuggest keywords
+```
+
+(`seerxo audit` works as an alias for `analyze`.)
+
 Prefer interactive? Just run `seerxo` and type your product
 (add a category with `|`, e.g. `Boho bedroom wall art set | Wall Art`).
-Add `--json` to any generate for machine-readable output.
+Add `--json` to any command for machine-readable output.
 
 <details id="claude-desktop-mcp">
 <summary><b>🤖 Claude Desktop (MCP) setup</b></summary>
