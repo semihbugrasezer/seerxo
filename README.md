@@ -57,7 +57,6 @@ each tag ≤20 chars, lowercase, no duplicates.
 | 🤖 **Claude Desktop (MCP)** | "Generate a listing" mid-conversation | [Setup ↓](#claude-desktop-mcp) |
 | 🧑‍💻 **Claude Code skill** | Listings without leaving your editor | `seerxo skill add` |
 | 🌐 **[Web app](https://www.seerxo.com)** | Zero install + free [SEO Score audit](https://www.seerxo.com/audit) | Open and type |
-| 🧩 **[Chrome extension](https://github.com/semihbugrasezer/seerxo-chrome-extension)** | Optimize on the Etsy page itself | Early preview |
 
 One account, one credit pool — every channel shares it.
 
@@ -157,7 +156,8 @@ Check state anytime with `seerxo status`; sign out with `seerxo logout`.
 
 | | Free | Premium |
 |---|---|---|
-| Generations | **5** / month | up to **300** / month — [Upgrade →](https://www.seerxo.com/pricing) |
+| Listing audit (`analyze`) | **Unlimited** | Unlimited |
+| AI actions (generate, optimize, keywords) | **5** / month | up to **300** / month — [Upgrade →](https://www.seerxo.com/pricing) |
 
 Both plans include every channel — CLI, Claude Desktop, Claude Code skill, and the web app.
 
