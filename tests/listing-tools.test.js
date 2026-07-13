@@ -21,6 +21,16 @@ describe('listing tool definitions', () => {
       }
     }
   });
+
+  it('exposes a mode enum on seerxo_optimize_listing', () => {
+    const optimizeTool = LISTING_TOOLS.find((t) => t.name === 'seerxo_optimize_listing');
+    assert.deepStrictEqual(optimizeTool.inputSchema.properties.mode.enum, [
+      'full',
+      'title_only',
+      'description_only',
+      'tags_only',
+    ]);
+  });
 });
 
 describe('buildListingPayload', () => {
@@ -104,6 +114,19 @@ describe('formatters', () => {
     assert.deepStrictEqual(buildListingPayload({ seed: 'ceramic mug' }), { seed: 'ceramic mug' });
   });
 
+  it('notes when only a single field was rewritten', () => {
+    const text = formatOptimizeResult({
+      before: { seoScore: 62 },
+      after: { seoScore: 88 },
+      optimized: { title: 'New Title', description: 'Same description.', tags: ['a', 'b'] },
+      resolved: ['title_length'],
+      unresolved: [],
+      fallback: false,
+      mode: 'title_only',
+    });
+    assert.ok(text.includes('only the title was rewritten'));
+  });
+
   it('flags the fallback case honestly', () => {
     const text = formatOptimizeResult({
       before: { seoScore: 90 },
@@ -149,5 +172,22 @@ describe('cli listing commands', () => {
     const { lines, failed } = await captureError(['keywords']);
     assert.ok(failed);
     assert.ok(lines.join(' ').includes('--seed'));
+  });
+
+  it('treats bare "help" the same as --help', async () => {
+    const original = console.log;
+    const lines = [];
+    console.log = (...parts) => lines.push(parts.join(' '));
+    const exitBefore = process.exitCode;
+    try {
+      await handleCli(['help']);
+    } finally {
+      console.log = original;
+    }
+    const failed = process.exitCode === 1;
+    process.exitCode = exitBefore;
+
+    assert.ok(!failed);
+    assert.ok(lines.join('\n').includes('seerxo optimize'));
   });
 });

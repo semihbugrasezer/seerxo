@@ -370,7 +370,7 @@ const printUsage = () => {
       `  seerxo quota        # show remaining credits\n` +
       `  seerxo generate --product \"...\" [--category \"...\"] [--json]\n` +
       `  seerxo analyze  --title \"...\" [--tags \"a,b,c\" --description \"...\" --product \"...\"] [--json]\n` +
-      `  seerxo optimize --title \"...\" [--tags \"a,b,c\" --description \"...\" --product \"...\"] [--json]\n` +
+      `  seerxo optimize --title \"...\" [--tags \"a,b,c\" --description \"...\" --product \"...\"] [--mode full|title_only|description_only|tags_only] [--json]\n` +
       `  seerxo keywords --seed \"ceramic mug\" [--title \"...\" --tags \"a,b,c\"] [--json]\n` +
       `  seerxo skill add|remove|path [--project]   # Claude Code skill\n` +
       `  seerxo update|upgrade   # update CLI to latest\n` +
@@ -412,6 +412,9 @@ const printCliBanner = () => {
     `${chalk.cyan('configure')}  ${chalk.gray('Set email & API key')}`,
     `${chalk.cyan('generate')}   ${chalk.gray('Guided prompt (product/category)')}`,
     `${chalk.cyan('quit')}       ${chalk.gray('Exit interactive mode')}`,
+    '',
+    chalk.gray('  analyze / optimize / keywords take flags — run them from your shell,'),
+    chalk.gray('  e.g. seerxo analyze --title "..." --tags "a,b" (see: seerxo help)'),
   ].join('\n');
 
   console.log(
@@ -876,7 +879,18 @@ export const LISTING_TOOLS = [
     name: 'seerxo_optimize_listing',
     description:
       'Rewrite an Etsy listing to fix its audit findings: improved title, description, and tag set, each mapped to the finding it resolves, with a before/after SEO score. Etsy limits (140-char title, 13 tags, 20 chars per tag) are enforced server-side and the result never scores below the original. Provide the current listing fields.',
-    inputSchema: { type: 'object', properties: LISTING_INPUT_PROPERTIES, required: [] },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        ...LISTING_INPUT_PROPERTIES,
+        mode: {
+          type: 'string',
+          enum: ['full', 'title_only', 'description_only', 'tags_only'],
+          description: 'Which field(s) to rewrite. Defaults to "full" (title + description + tags). Use a single-field mode to rewrite just that field and leave the rest untouched.',
+        },
+      },
+      required: [],
+    },
   },
 ];
 
@@ -908,11 +922,14 @@ export function formatOptimizeResult(data) {
   const fallbackNote = data.fallback
     ? '\n\n> Note: the rewrite did not beat the original listing, so the original fields were kept.'
     : '';
+  const modeNote = data.mode && data.mode !== 'full'
+    ? ` · only the ${data.mode.replace('_only', '')} was rewritten`
+    : '';
 
   return (
     `# Optimized Listing\n\n` +
     `**SEO Score: ${before.seoScore} → ${after.seoScore}** · resolved ${data.resolved?.length ?? 0} finding(s)` +
-    `${data.unresolved?.length ? `, still open: ${data.unresolved.join(', ')}` : ''}${fallbackNote}\n\n` +
+    `${data.unresolved?.length ? `, still open: ${data.unresolved.join(', ')}` : ''}${modeNote}${fallbackNote}\n\n` +
     `## Title\n${optimized.title}\n\n` +
     `## Description\n${optimized.description}\n\n` +
     `## Tags (${(optimized.tags || []).length})\n${(optimized.tags || []).join(', ')}`
@@ -1028,6 +1045,18 @@ export async function startInteractiveShell() {
         return promptLoop();
       }
 
+      if (cmd === 'analyze' || cmd === 'audit' || cmd === 'optimize' || cmd === 'keywords') {
+        const command = cmd === 'audit' ? 'analyze' : cmd;
+        console.log(
+          `\n${chalk.cyan(command)} takes flags, so run it from your shell instead of this prompt, e.g.\n` +
+            (command === 'keywords'
+              ? chalk.gray(`  seerxo keywords --seed "ceramic mug"`)
+              : chalk.gray(`  seerxo ${command} --title "Minimalist Mug" --tags "mug,gift" --description "..."`)) +
+            '\n'
+        );
+        continue;
+      }
+
       if (cmd === 'help') {
         console.log(
           '\n' +
@@ -1122,7 +1151,7 @@ export async function startInteractiveShell() {
 export async function handleCli(subArgs) {
   const sub = normalizeCommandName(subArgs[0]);
 
-  if (!sub || sub === '--help' || sub === '-h') {
+  if (!sub || sub === '--help' || sub === '-h' || sub === 'help') {
     printCliBanner();
     printUsage();
     return;
@@ -1235,6 +1264,7 @@ export async function handleCli(subArgs) {
       tags: rawTags ? rawTags.split(',').map((tag) => tag.trim()).filter(Boolean) : undefined,
       url: flag('url'),
     });
+    if (sub === 'optimize' && flag('mode')) payload.mode = flag('mode');
     if (Object.keys(payload).length === 0) {
       console.error(
         sub === 'keywords'
@@ -1403,10 +1433,9 @@ export function startMcpServer() {
             }));
           } else if (name === 'seerxo_analyze_listing' || name === 'seerxo_optimize_listing') {
             const isAnalyze = name === 'seerxo_analyze_listing';
-            const data = await callSeerxoV1(
-              isAnalyze ? '/v1/analyze' : '/v1/optimize',
-              buildListingPayload(toolArgs)
-            );
+            const payload = buildListingPayload(toolArgs);
+            if (!isAnalyze && toolArgs.mode) payload.mode = toolArgs.mode;
+            const data = await callSeerxoV1(isAnalyze ? '/v1/analyze' : '/v1/optimize', payload);
 
             const response = {
               jsonrpc: '2.0',
