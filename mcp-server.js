@@ -1264,7 +1264,6 @@ export async function handleCli(subArgs) {
       tags: rawTags ? rawTags.split(',').map((tag) => tag.trim()).filter(Boolean) : undefined,
       url: flag('url'),
     });
-    if (sub === 'optimize' && flag('mode')) payload.mode = flag('mode');
     if (Object.keys(payload).length === 0) {
       console.error(
         sub === 'keywords'
@@ -1274,6 +1273,7 @@ export async function handleCli(subArgs) {
       process.exitCode = 1;
       return;
     }
+    if (sub === 'optimize' && flag('mode')) payload.mode = flag('mode');
     try {
       const data = await callSeerxoV1(sub === 'keywords' ? '/v1/keywords' : `/v1/${sub}`, payload);
       if (jsonOutput) {
