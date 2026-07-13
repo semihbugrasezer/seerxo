@@ -1,6 +1,6 @@
 {
   "name": "seerxo",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "MCP server for AI-powered Etsy SEO generation. Use with Claude Desktop to generate optimized product titles, descriptions, and tags in seconds.",
   "type": "module",
   "main": "mcp-server.js",

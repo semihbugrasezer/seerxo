@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/semihbugrasezer/seerxo/compare/v1.6.0...v1.7.0) (2026-07-13)
+
+
+### Features
+
+* **assets:** redesign README banner with listing-intelligence story ([#74](https://github.com/semihbugrasezer/seerxo/issues/74)) ([42897b0](https://github.com/semihbugrasezer/seerxo/commit/42897b0af97de263cdd3f44a966d2cc3aca4e9a1))
+
 # [1.6.0](https://github.com/semihbugrasezer/seerxo/compare/v1.5.0...v1.6.0) (2026-07-12)
 
 
