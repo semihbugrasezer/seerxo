@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/semihbugrasezer/seerxo/compare/v1.7.0...v1.8.0) (2026-07-13)
+
+
+### Features
+
+* **cli+skill:** make analyze/optimize/keywords fully reachable ([#76](https://github.com/semihbugrasezer/seerxo/issues/76)) ([a440135](https://github.com/semihbugrasezer/seerxo/commit/a4401354f1a40a2a0479aacf5940139f698a44c9))
+
 # [1.7.0](https://github.com/semihbugrasezer/seerxo/compare/v1.6.0...v1.7.0) (2026-07-13)
 
 
