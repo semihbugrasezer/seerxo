@@ -1,3 +1,10 @@
+## [1.8.1](https://github.com/semihbugrasezer/seerxo/compare/v1.8.0...v1.8.1) (2026-07-13)
+
+
+### Bug Fixes
+
+* **cli:** validate listing input before applying --mode ([#77](https://github.com/semihbugrasezer/seerxo/issues/77)) ([0e36c0d](https://github.com/semihbugrasezer/seerxo/commit/0e36c0d4f271fef9a0167bb7e29930d0e467eabd)), closes [#76](https://github.com/semihbugrasezer/seerxo/issues/76)
+
 # [1.8.0](https://github.com/semihbugrasezer/seerxo/compare/v1.7.0...v1.8.0) (2026-07-13)
 
 
