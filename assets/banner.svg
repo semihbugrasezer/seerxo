@@ -1,53 +1,105 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="280" viewBox="0 0 1200 280" role="img" aria-label="Seerxo — Etsy SEO in seconds">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-label="Seerxo — generate, score, and fix Etsy listings">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#0f0f14"/>
-      <stop offset="0.55" stop-color="#16121f"/>
-      <stop offset="1" stop-color="#1d1128"/>
+      <stop offset="0" stop-color="#0b0b10"/>
+      <stop offset="0.5" stop-color="#141020"/>
+      <stop offset="1" stop-color="#1e1230"/>
     </linearGradient>
     <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="#a78bfa"/>
-      <stop offset="0.5" stop-color="#f0abfc"/>
+      <stop offset="0.55" stop-color="#e879f9"/>
       <stop offset="1" stop-color="#fbbf24"/>
     </linearGradient>
-    <radialGradient id="glow" cx="0.82" cy="0.2" r="0.7">
-      <stop offset="0" stop-color="#a78bfa" stop-opacity="0.28"/>
+    <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8b5cf6"/>
+      <stop offset="1" stop-color="#6d28d9"/>
+    </linearGradient>
+    <linearGradient id="scorebar" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f59e0b"/>
+      <stop offset="1" stop-color="#34d399"/>
+    </linearGradient>
+    <radialGradient id="glowR" cx="0.85" cy="0.15" r="0.75">
+      <stop offset="0" stop-color="#a78bfa" stop-opacity="0.32"/>
       <stop offset="1" stop-color="#a78bfa" stop-opacity="0"/>
     </radialGradient>
+    <radialGradient id="glowL" cx="0.08" cy="0.95" r="0.65">
+      <stop offset="0" stop-color="#e879f9" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#e879f9" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse">
+      <path d="M36 0H0V36" fill="none" stroke="#ffffff" stroke-opacity="0.035" stroke-width="1"/>
+    </pattern>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6"/>
+    </filter>
   </defs>
 
-  <rect width="1200" height="280" rx="16" fill="url(#bg)"/>
-  <rect width="1200" height="280" rx="16" fill="url(#glow)"/>
+  <!-- backdrop -->
+  <rect width="1200" height="300" rx="18" fill="url(#bg)"/>
+  <rect width="1200" height="300" rx="18" fill="url(#grid)"/>
+  <rect width="1200" height="300" rx="18" fill="url(#glowR)"/>
+  <rect width="1200" height="300" rx="18" fill="url(#glowL)"/>
+  <rect x="0.5" y="0.5" width="1199" height="299" rx="17.5" fill="none" stroke="#a78bfa" stroke-opacity="0.22"/>
 
-  <!-- sparkle marks -->
-  <g fill="#f0abfc" opacity="0.9">
-    <path d="M985 62 l6 16 16 6 -16 6 -6 16 -6 -16 -16 -6 16 -6 z"/>
+  <!-- sparkles -->
+  <g fill="#e879f9" opacity="0.85">
+    <path d="M652 52 l5 13 13 5 -13 5 -5 13 -5 -13 -13 -5 13 -5 z"/>
   </g>
-  <g fill="#a78bfa" opacity="0.7">
-    <path d="M1080 150 l4 11 11 4 -11 4 -4 11 -4 -11 -11 -4 11 -4 z"/>
+  <g fill="#a78bfa" opacity="0.55">
+    <path d="M612 236 l4 10 10 4 -10 4 -4 10 -4 -10 -10 -4 10 -4 z"/>
   </g>
-  <g fill="#fbbf24" opacity="0.6">
-    <path d="M930 190 l3 8 8 3 -8 3 -3 8 -3 -8 -8 -3 8 -3 z"/>
+  <g fill="#fbbf24" opacity="0.5">
+    <path d="M1148 236 l3 8 8 3 -8 3 -3 8 -3 -8 -8 -3 8 -3 z"/>
   </g>
 
-  <text x="72" y="128" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="64" font-weight="800" fill="#fafafa" letter-spacing="-1">
-    Seerxo
-  </text>
-  <text x="72" y="172" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="26" font-weight="500" fill="url(#accent)">
-    Etsy SEO in seconds
-  </text>
-  <text x="72" y="212" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="18" fill="#a1a1aa">
-    Front-loaded title · hook-first description · all 13 tags · Etsy attributes
-  </text>
+  <!-- brand mark -->
+  <g>
+    <rect x="64" y="58" width="58" height="58" rx="16" fill="url(#tile)"/>
+    <rect x="64" y="58" width="58" height="58" rx="16" fill="#ffffff" opacity="0.06"/>
+    <rect x="64.75" y="58.75" width="56.5" height="56.5" rx="15.25" fill="none" stroke="#ffffff" stroke-opacity="0.25"/>
+    <path d="M93 68 l6.2 15.8 15.8 6.2 -15.8 6.2 -6.2 15.8 -6.2 -15.8 -15.8 -6.2 15.8 -6.2 z" fill="#ffffff"/>
+    <circle cx="112" cy="72" r="2.6" fill="#ffffff" opacity="0.9"/>
+  </g>
 
-  <!-- terminal chip -->
-  <g font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="15">
-    <rect x="700" y="86" width="428" height="110" rx="10" fill="#09090b" stroke="#3f3f46" stroke-width="1"/>
-    <circle cx="722" cy="108" r="5" fill="#f87171"/>
-    <circle cx="740" cy="108" r="5" fill="#fbbf24"/>
-    <circle cx="758" cy="108" r="5" fill="#34d399"/>
-    <text x="722" y="146" fill="#71717a">$</text>
-    <text x="738" y="146" fill="#e4e4e7">seerxo generate --product</text>
-    <text x="722" y="174" fill="#a78bfa">"handmade ceramic mug"</text>
+  <!-- wordmark + copy -->
+  <text x="140" y="102" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="46" font-weight="800" fill="#fafafa" letter-spacing="-1.2">Seerxo</text>
+  <text x="141" y="126" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="15" font-weight="600" letter-spacing="4.5" fill="#8b8b96">ETSY LISTING INTELLIGENCE</text>
+
+  <text x="64" y="180" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="30" font-weight="700" fill="#f4f4f5">Generate, <tspan fill="url(#accent)">score</tspan>, and fix Etsy listings</text>
+  <text x="64" y="212" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="16" fill="#a1a1aa">Front-loaded titles · all 13 tags · explainable SEO score · guided rewrites</text>
+
+  <!-- channel chips -->
+  <g font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" font-weight="600">
+    <rect x="64" y="232" width="52" height="26" rx="13" fill="#a78bfa" fill-opacity="0.12" stroke="#a78bfa" stroke-opacity="0.35"/>
+    <text x="90" y="249" fill="#c4b5fd" text-anchor="middle">CLI</text>
+    <rect x="124" y="232" width="56" height="26" rx="13" fill="#a78bfa" fill-opacity="0.12" stroke="#a78bfa" stroke-opacity="0.35"/>
+    <text x="152" y="249" fill="#c4b5fd" text-anchor="middle">MCP</text>
+    <rect x="188" y="232" width="90" height="26" rx="13" fill="#a78bfa" fill-opacity="0.12" stroke="#a78bfa" stroke-opacity="0.35"/>
+    <text x="233" y="249" fill="#c4b5fd" text-anchor="middle">Claude skill</text>
+    <rect x="286" y="232" width="56" height="26" rx="13" fill="#a78bfa" fill-opacity="0.12" stroke="#a78bfa" stroke-opacity="0.35"/>
+    <text x="314" y="249" fill="#c4b5fd" text-anchor="middle">Web</text>
+    <rect x="350" y="232" width="52" height="26" rx="13" fill="#a78bfa" fill-opacity="0.12" stroke="#a78bfa" stroke-opacity="0.35"/>
+    <text x="376" y="249" fill="#c4b5fd" text-anchor="middle">API</text>
+  </g>
+
+  <!-- terminal card -->
+  <g>
+    <rect x="712" y="54" width="424" height="164" rx="14" fill="#09090b" filter="url(#soft)" opacity="0.6"/>
+    <rect x="708" y="50" width="424" height="164" rx="14" fill="#0c0c11" stroke="#3f3f46" stroke-width="1"/>
+    <circle cx="732" cy="74" r="5" fill="#f87171"/>
+    <circle cx="750" cy="74" r="5" fill="#fbbf24"/>
+    <circle cx="768" cy="74" r="5" fill="#34d399"/>
+    <g font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="14">
+      <text x="730" y="108"><tspan fill="#71717a">$ </tspan><tspan fill="#e4e4e7">seerxo analyze --title </tspan><tspan fill="#a78bfa">"Minimalist Mug"</tspan></text>
+      <text x="730" y="134"><tspan fill="#71717a">  SEO Score </tspan><tspan fill="#fbbf24" font-weight="700">62</tspan><tspan fill="#71717a"> → </tspan><tspan fill="#34d399" font-weight="700">88</tspan><tspan fill="#71717a">  ·  4 fixes applied</tspan></text>
+    </g>
+    <!-- before/after bar -->
+    <rect x="730" y="150" width="380" height="8" rx="4" fill="#27272a"/>
+    <rect x="730" y="150" width="334" height="8" rx="4" fill="url(#scorebar)"/>
+    <circle cx="965" cy="154" r="6" fill="#fbbf24" stroke="#0c0c11" stroke-width="2"/>
+    <circle cx="1064" cy="154" r="6" fill="#34d399" stroke="#0c0c11" stroke-width="2"/>
+    <g font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="14">
+      <text x="730" y="192"><tspan fill="#71717a">$ </tspan><tspan fill="#e4e4e7">seerxo optimize --title </tspan><tspan fill="#a78bfa">"..."</tspan><tspan fill="#34d399"> ✓</tspan></text>
+    </g>
   </g>
 </svg>
