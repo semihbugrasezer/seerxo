@@ -162,6 +162,12 @@ describe('cli listing commands', () => {
     assert.ok(lines.join(' ').includes('--title'));
   });
 
+  it('rejects optimize --mode with no listing fields instead of calling the API', async () => {
+    const { lines, failed } = await captureError(['optimize', '--mode', 'title_only']);
+    assert.ok(failed);
+    assert.ok(lines.join(' ').includes('--title'));
+  });
+
   it('treats audit as an alias for analyze', async () => {
     const { lines, failed } = await captureError(['audit']);
     assert.ok(failed);
