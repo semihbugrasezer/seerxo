@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/semihbugrasezer/seerxo/compare/v1.8.1...v1.9.0) (2026-07-17)
+
+
+### Features
+
+* publish to the official MCP Registry on every release ([#80](https://github.com/semihbugrasezer/seerxo/issues/80)) ([c23e487](https://github.com/semihbugrasezer/seerxo/commit/c23e4874d37d97fd625f5c500e814eb3c7b7cf40))
+
 ## [1.8.1](https://github.com/semihbugrasezer/seerxo/compare/v1.8.0...v1.8.1) (2026-07-13)
 
 
