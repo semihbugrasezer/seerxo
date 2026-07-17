@@ -41,7 +41,33 @@ jobs:
         run: npm run build --if-present
 
       - name: Release
+        id: release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: npx semantic-release
+        # semantic-release bumps package.json in the working tree when it
+        # releases; comparing before/after tells us whether one happened.
+        run: |
+          BEFORE=$(node -p "require('./package.json').version")
+          npx semantic-release
+          AFTER=$(node -p "require('./package.json').version")
+          if [ "$BEFORE" != "$AFTER" ]; then
+            echo "released=true" >> "$GITHUB_OUTPUT"
+            echo "version=$AFTER" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to MCP Registry
+        if: steps.release.outputs.released == 'true'
+        # Authenticates via GitHub Actions OIDC (id-token: write above) — no
+        # extra secrets. Keeps registry.modelcontextprotocol.io in sync with
+        # every npm release; clients like PulseMCP and Smithery index it.
+        run: |
+          curl -sL "https://api.github.com/repos/modelcontextprotocol/registry/releases/latest" \
+            | jq -r '.assets[] | select(.name | test("linux_amd64.tar.gz$")) | .browser_download_url' \
+            | xargs curl -sL -o mcp-publisher.tar.gz
+          tar xzf mcp-publisher.tar.gz mcp-publisher
+          VERSION="${{ steps.release.outputs.version }}"
+          jq --arg v "$VERSION" '.version = $v | .packages[0].version = $v' server.json > server.json.tmp
+          mv server.json.tmp server.json
+          ./mcp-publisher login github-oidc
+          ./mcp-publisher publish

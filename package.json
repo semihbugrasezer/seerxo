@@ -76,5 +76,6 @@
     "@semantic-release/github": {
       "undici": "^7.28.0"
     }
-  }
+  },
+  "mcpName": "io.github.semihbugrasezer/seerxo"
 }
