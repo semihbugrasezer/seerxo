@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/semihbugrasezer/seerxo/compare/v1.9.1...v1.10.0) (2026-07-18)
+
+
+### Features
+
+* **skill:** add remote MCP setup and branding ([183329b](https://github.com/semihbugrasezer/seerxo/commit/183329b09377397b49ee97bdeb03809a71482257))
+
 ## [1.9.1](https://github.com/semihbugrasezer/seerxo/compare/v1.9.0...v1.9.1) (2026-07-18)
 
 
