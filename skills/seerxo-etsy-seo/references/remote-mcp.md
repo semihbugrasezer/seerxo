@@ -105,11 +105,101 @@ same entitlement. Re-check current availability before giving plan-specific guid
 - [x] Add the Smithery backlink and npm weekly-download badges to the repository README.
 - [x] Upload `assets/avatar.png` as the GitHub `seerxo` organization avatar; Smithery's
   skill header reads `https://github.com/seerxo.png` rather than the skill icon metadata.
-- [ ] Confirm privacy policy, support page, test account, and directory screenshots.
+- [x] Publish crawler-safe privacy, support, terms, and status pages.
+- [x] Prepare a password-based directory reviewer flow without MFA or email verification.
+- [ ] Enable the reviewer account secrets in production and run every protected tool.
 - [ ] Submit to the Claude Connectors Directory.
-- [ ] Submit the ChatGPT app after workspace testing and approval.
+- [ ] Submit the OpenAI app-plus-skill plugin after identity and domain verification.
 
-The last three items require the publisher account, policy URLs, review assets, and any
-vendor-requested test credentials; do not mark them complete from code-only validation.
+The last three items require publisher account access. Do not mark them complete from
+code-only validation or include reviewer credentials in Git, logs, screenshots, or prompts.
+
+## Directory submission packet
+
+Use these values in both publisher portals:
+
+| Field | Value |
+| --- | --- |
+| Name | Seerxo |
+| Tagline | Etsy listing intelligence for sellers and AI agents. |
+| Short description | Generate, audit, optimize, and research Etsy listings with explainable SEO guidance. |
+| Server URL | `https://api.seerxo.com/mcp` |
+| Transport | Streamable HTTP |
+| Authentication | OAuth 2.1 Authorization Code, PKCE S256, DCR, refresh tokens |
+| Website | `https://www.seerxo.com` |
+| Documentation | `https://github.com/semihbugrasezer/seerxo/blob/main/skills/seerxo-etsy-seo/references/remote-mcp.md` |
+| Privacy | `https://www.seerxo.com/privacy` |
+| Support | `https://www.seerxo.com/help` |
+| Terms | `https://www.seerxo.com/consumer-terms` |
+| Status | `https://www.seerxo.com/status` |
+| Logo | `https://raw.githubusercontent.com/semihbugrasezer/seerxo/main/assets/avatar.png` |
+| Category | Productivity / Ecommerce |
+| Allowed link URIs | None; Seerxo does not use `ui/open-link` |
+
+Long description:
+
+> Seerxo helps Etsy sellers and AI agents create complete listings, audit existing titles,
+> descriptions, and tags, optimize weak fields without score regression, research ranked
+> Etsy keyword suggestions, and check account usage. Audits are free. Generation,
+> optimization, and keyword research use the authenticated account's monthly AI-action quota.
+> Seerxo returns drafts and recommendations only; it does not publish or modify Etsy shops.
+
+Data handling summary:
+
+- The free audit computes scores from supplied listing fields without calling an AI model.
+- Generation and optimization send the minimum supplied product/listing text to Seerxo's AI
+  provider. Keyword research uses the supplied seed and existing listing fields.
+- Seerxo stores account, quota, billing, security, and operational records as described in the
+  privacy policy. Tool responses omit tokens, passwords, API keys, internal user IDs, and logs.
+- No tool reads from or writes to an Etsy account. All generated content remains a draft until
+  the user manually publishes it.
+
+Tool review matrix:
+
+| Tool | `readOnlyHint` | `destructiveHint` | `openWorldHint` | Reason |
+| --- | --- | --- | --- | --- |
+| `seerxo_analyze_listing` | `true` | `false` | `false` | Local, free computation; no state change |
+| `seerxo_quota` | `true` | `false` | `false` | Reads private Seerxo usage |
+| `generate_etsy_seo` | `false` | `false` | `false` | Runs generation and consumes quota inside Seerxo |
+| `seerxo_optimize_listing` | `false` | `false` | `false` | Runs optimization and consumes quota inside Seerxo |
+| `seerxo_suggest_keywords` | `false` | `false` | `false` | Runs research and consumes quota inside Seerxo |
+
+### Positive review cases
+
+1. **Audit:** “Audit this Etsy title: Handmade Ceramic Coffee Mug.” Expect
+   `seerxo_analyze_listing`, a 0–100 score, sub-scores, weak points, and no quota charge.
+2. **Generate:** “Create an Etsy listing for a handmade speckled ceramic coffee mug, 12 oz.”
+   Expect `generate_etsy_seo`, one title, alternatives, a description, exactly 13 tags, and
+   usage remaining.
+3. **Optimize:** “Improve this weak listing without lowering its score: title ‘Ceramic Mug’,
+   tags ‘mug’.” Expect `seerxo_optimize_listing`, before/after scores, changed fields, and a
+   non-regression fallback when needed.
+4. **Keywords:** “Research Etsy keywords for minimalist wedding invitation.” Expect
+   `seerxo_suggest_keywords`, ranked phrases, placements, relative demand only, and no invented
+   absolute search volume.
+5. **Quota:** “How many Seerxo AI actions do I have left?” Expect `seerxo_quota`, tier, limit,
+   used, remaining, and channel breakdown.
+
+### Negative review cases
+
+1. **Missing audit input:** “Audit my listing” with no title, tags, or description. Ask for at
+   least one listing field; do not invent listing content.
+2. **Bare Etsy URL:** A listing URL without a usable title slug and no listing fields. Ask for
+   the title or listing text; do not claim Seerxo can bypass Etsy access controls.
+3. **External publishing:** “Publish this listing to my Etsy shop.” Explain that Seerxo returns
+   drafts only and does not access or modify Etsy shops; do not call a generation tool unless
+   the user also asks for content creation.
+
+## Portal gates
+
+- Claude remote MCP submission requires a Team or Enterprise organization and an Owner or a
+  delegated Directory management role. Provide the fully populated reviewer account.
+- OpenAI public publication now uses an app-plus-skill **plugin** submission. Select **With
+  MCP**, upload the skill bundle, use a verified business/developer identity, provide five
+  positive and three negative cases, and complete the domain challenge at
+  `/.well-known/openai-apps-challenge` when the portal issues its token.
+- Seerxo has no MCP App UI, so do not upload UI screenshots. Claude's 3–5 screenshot rule and
+  OpenAI's optional screenshots apply only when an interactive UI resource exists.
 
 Claude directory guidance: <https://claude.com/docs/connectors/building/submission>
+OpenAI plugin guidance: <https://learn.chatgpt.com/docs/submit-plugins>
