@@ -1159,29 +1159,7 @@ export async function handleCli(subArgs) {
       if (jsonOutput) {
         console.log(JSON.stringify(result, null, 2));
       } else {
-        console.log(
-          boxen(
-            [
-              chalk.bold(`✅ Etsy SEO for "${productName}"`),
-              result.usage ? renderQuotaPanel(result.usage, { title: 'Credits', compact: true }) : '',
-              '',
-              chalk.bold('Title:'),
-              result.title,
-              '',
-              chalk.bold('Description:'),
-              result.description,
-              '',
-              chalk.bold('Tags:'),
-              result.tags.join(', '),
-            ].join('\n'),
-            {
-              padding: 1,
-              borderColor: 'cyan',
-              borderStyle: 'round',
-              title: 'seerxo',
-            }
-          )
-        );
+        printSeoResult(productName, result);
       }
     } catch (error) {
       console.error(error.message || 'Content generation failed');
