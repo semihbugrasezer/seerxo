@@ -3,7 +3,7 @@ name: seerxo-etsy-seo
 description: Generate, audit, optimize, and research keywords for Etsy listings through the Seerxo remote MCP server or CLI. Use when a user wants an Etsy title, description, 13 tags, SEO score, listing rewrite, keyword ideas, quota help, or help connecting and testing Seerxo with Claude or ChatGPT.
 ---
 
-![Seerxo](https://www.seerxo.com/favicon.svg)
+<img src="https://www.seerxo.com/favicon.svg" alt="Seerxo" width="72" height="72" />
 
 # Seerxo Etsy SEO
 
