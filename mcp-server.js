@@ -24,14 +24,20 @@ export { formatAnalyzeResult, formatKeywordsResult, formatOptimizeResult };
 function boxen(content, options = {}) {
   const title = options.title ? ` ${options.title} ` : '';
   const lines = String(content).split('\n');
+  const processedLines = lines.map((line) => ({
+    original: line,
+    visibleLength: line.replace(/\u001b\[[0-9;]*m/g, '').length,
+  }));
   const visibleWidth = Math.max(
     title.length,
-    ...lines.map((line) => line.replace(/\u001b\[[0-9;]*m/g, '').length)
+    ...processedLines.map((line) => line.visibleLength)
   );
   const width = Math.max(visibleWidth + 4, 12);
   const top = `+${title}${'-'.repeat(Math.max(0, width - title.length - 2))}+`;
   const bottom = `+${'-'.repeat(width - 2)}+`;
-  const body = lines.map((line) => `| ${line}${' '.repeat(Math.max(0, width - 3 - line.replace(/\u001b\[[0-9;]*m/g, '').length))}|`);
+  const body = processedLines.map(({ original, visibleLength }) =>
+    `| ${original}${' '.repeat(Math.max(0, width - 3 - visibleLength))}|`
+  );
   return [top, ...body, bottom].join('\n');
 }
 
