@@ -44,7 +44,7 @@ flowchart LR
 | `seerxo_optimize_listing` | `optimize` | `POST /v1/optimize` |
 | `seerxo_suggest_keywords` | `keywords` | `POST /v1/keywords` |
 
-Other endpoints: `GET /mcp/quota` (quota check), `POST /auth/mcp/login` + `/auth/mcp/confirm` (CLI login flow). All must exist in `seerxo-backend/openapi.yaml`.
+Other endpoints: `GET /mcp/quota` (quota check), `POST /auth/mcp/login` + `/auth/mcp/confirm` (CLI login flow). All must match the published API spec (https://seerxo.com/openapi.yaml).
 
 ## Architecture rules
 
