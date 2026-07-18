@@ -1,3 +1,10 @@
+## [1.12.5](https://github.com/semihbugrasezer/seerxo/compare/v1.12.4...v1.12.5) (2026-07-18)
+
+
+### Bug Fixes
+
+* hide internal JSON-RPC errors ([032eac8](https://github.com/semihbugrasezer/seerxo/commit/032eac807612206c9d2bcf979c3b7337e5221805))
+
 ## [1.12.4](https://github.com/semihbugrasezer/seerxo/compare/v1.12.3...v1.12.4) (2026-07-18)
 
 
