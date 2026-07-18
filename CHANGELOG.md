@@ -1,3 +1,10 @@
+## [1.10.2](https://github.com/semihbugrasezer/seerxo/compare/v1.10.1...v1.10.2) (2026-07-18)
+
+
+### Bug Fixes
+
+* **cli:** install complete skill bundle ([84dbe89](https://github.com/semihbugrasezer/seerxo/commit/84dbe8957b47d3f5c50a69f78de670a51c923b3c))
+
 ## [1.10.1](https://github.com/semihbugrasezer/seerxo/compare/v1.10.0...v1.10.1) (2026-07-18)
 
 
