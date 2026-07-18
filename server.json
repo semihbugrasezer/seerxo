@@ -8,7 +8,7 @@
     "source": "github"
   },
   "websiteUrl": "https://www.seerxo.com",
-  "version": "1.10.0",
+  "version": "1.10.1",
   "remotes": [
     {
       "type": "streamable-http",
@@ -20,7 +20,7 @@
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "seerxo",
-      "version": "1.10.0",
+      "version": "1.10.1",
       "transport": {
         "type": "stdio"
       },
