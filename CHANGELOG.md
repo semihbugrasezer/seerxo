@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/semihbugrasezer/seerxo/compare/v1.11.0...v1.12.0) (2026-07-18)
+
+
+### Features
+
+* align stdio MCP with versioned API ([98d4681](https://github.com/semihbugrasezer/seerxo/commit/98d4681568c342bee3bd15771207c246485d78a9))
+
 # [1.11.0](https://github.com/semihbugrasezer/seerxo/compare/v1.10.2...v1.11.0) (2026-07-18)
 
 
