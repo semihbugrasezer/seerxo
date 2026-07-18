@@ -1237,6 +1237,166 @@ export async function handleCli(subArgs) {
   process.exitCode = 1;
 }
 
+async function handleMcpToolCall(request) {
+  const { name, arguments: toolArgs } = request.params;
+
+  if (name === 'generate_etsy_seo') {
+    const result = await generateEtsySEO(
+      toolArgs.product_name,
+      toolArgs.category || ''
+    );
+    const usageInfo = result.usage
+      ? (() => {
+          const summary = buildQuotaSummary(result.usage);
+          return `\n\n---\n**Credits:** ${summary.headline} (${summary.detail})`;
+        })()
+      : '';
+
+    console.log(JSON.stringify({
+      jsonrpc: '2.0',
+      id: request.id,
+      result: {
+        content: [{
+          type: 'text',
+          text: `# Etsy SEO Results for "${toolArgs.product_name}"\n\n## 📝 SEO Title\n${result.title}\n\n## 📄 Product Description\n${result.description}\n\n## 🏷️ Tags (13)\n${result.tags.join(', ')}${usageInfo}`,
+        }],
+        structuredContent: {
+          title: result.title,
+          description: result.description,
+          tags: result.tags,
+          ...(result.usage ? { usage: result.usage } : {}),
+        },
+      },
+    }));
+    return;
+  }
+
+  if (name === 'seerxo_suggest_keywords') {
+    const data = await callSeerxoV1('/v1/keywords', buildListingPayload(toolArgs));
+    console.log(JSON.stringify({
+      jsonrpc: '2.0',
+      id: request.id,
+      result: {
+        content: [{ type: 'text', text: formatKeywordsResult(data) }],
+        structuredContent: data,
+      },
+    }));
+    return;
+  }
+
+  if (name === 'seerxo_analyze_listing' || name === 'seerxo_optimize_listing') {
+    const isAnalyze = name === 'seerxo_analyze_listing';
+    const payload = buildListingPayload(toolArgs);
+    if (!isAnalyze && toolArgs.mode) payload.mode = toolArgs.mode;
+    const data = await callSeerxoV1(
+      isAnalyze ? '/v1/analyze' : '/v1/optimize',
+      payload
+    );
+
+    console.log(JSON.stringify({
+      jsonrpc: '2.0',
+      id: request.id,
+      result: {
+        content: [{
+          type: 'text',
+          text: isAnalyze ? formatAnalyzeResult(data) : formatOptimizeResult(data),
+        }],
+        structuredContent: data,
+      },
+    }));
+    return;
+  }
+
+  if (name === 'seerxo_quota') {
+    const quota = await fetchQuota();
+    console.log(JSON.stringify({
+      jsonrpc: '2.0',
+      id: request.id,
+      result: {
+        content: [{ type: 'text', text: JSON.stringify(quota, null, 2) }],
+        structuredContent: quota,
+      },
+    }));
+    return;
+  }
+
+  throw new Error(`Unknown tool: ${name}`);
+}
+
+async function processMcpMessage(line) {
+  let request = null;
+
+  try {
+    request = JSON.parse(line);
+
+    if (request.method === 'initialize') {
+      if (request.params?.initializationOptions?.email) {
+        userEmail = request.params.initializationOptions.email;
+      }
+      if (!userEmail) {
+        throw new Error('SEERXO_EMAIL is required. Run "seerxo configure".');
+      }
+      if (!apiKeyHeader) {
+        throw new Error('SEERXO_API_KEY is required. Run "seerxo configure".');
+      }
+
+      console.log(JSON.stringify({
+        jsonrpc: '2.0',
+        id: request.id,
+        result: {
+          protocolVersion: SUPPORTED_MCP_PROTOCOL_VERSIONS.has(request.params?.protocolVersion)
+            ? request.params.protocolVersion
+            : MCP_PROTOCOL_VERSION,
+          capabilities: { tools: {} },
+          serverInfo: {
+            name: 'seerxo',
+            title: 'Seerxo — Etsy SEO Assistant',
+            version: clientVersion,
+            description: 'Generate, analyze, and optimize Etsy listings with SEO-focused titles, descriptions, tags, and keyword suggestions.',
+            websiteUrl: 'https://www.seerxo.com',
+            icons: [{
+              src: 'https://www.seerxo.com/favicon.svg',
+              mimeType: 'image/svg+xml',
+            }],
+          },
+        },
+      }));
+      return;
+    }
+
+    if (request.method === 'tools/list') {
+      console.log(JSON.stringify({
+        jsonrpc: '2.0',
+        id: request.id,
+        result: { tools: MCP_TOOLS },
+      }));
+      return;
+    }
+
+    if (request.method === 'tools/call') {
+      await handleMcpToolCall(request);
+    }
+  } catch (error) {
+    if (
+      error instanceof SyntaxError ||
+      UNEXPECTED_TOKEN_REGEX.test(error.message || '')
+    ) {
+      console.error('[seerxo] Invalid JSON received, ignoring.');
+      return;
+    }
+
+    console.log(JSON.stringify({
+      jsonrpc: '2.0',
+      id: request?.id ?? null,
+      error: {
+        code: -32603,
+        message: error.message,
+        ...(error.requestId ? { data: { requestId: error.requestId } } : {}),
+      },
+    }));
+  }
+}
+
 export function startMcpServer() {
   if (!userEmail || !hasValidApiKey) {
     console.error(
@@ -1255,165 +1415,7 @@ export function startMcpServer() {
 
     for (const line of lines) {
       if (!line.trim()) continue;
-
-      let request = null;
-      try {
-        request = JSON.parse(line);
-
-        if (request.method === 'initialize') {
-          if (request.params?.initializationOptions?.email) {
-            userEmail = request.params.initializationOptions.email;
-          }
-
-          if (!userEmail) {
-            throw new Error('SEERXO_EMAIL is required. Run "seerxo configure".');
-          }
-          if (!apiKeyHeader) {
-            throw new Error('SEERXO_API_KEY is required. Run "seerxo configure".');
-          }
-
-          const response = {
-            jsonrpc: '2.0',
-            id: request.id,
-            result: {
-              protocolVersion: SUPPORTED_MCP_PROTOCOL_VERSIONS.has(request.params?.protocolVersion)
-                ? request.params.protocolVersion
-                : MCP_PROTOCOL_VERSION,
-              capabilities: {
-                tools: {},
-              },
-              serverInfo: {
-                name: 'seerxo',
-                title: 'Seerxo — Etsy SEO Assistant',
-                version: clientVersion,
-                description: 'Generate, analyze, and optimize Etsy listings with SEO-focused titles, descriptions, tags, and keyword suggestions.',
-                websiteUrl: 'https://www.seerxo.com',
-                icons: [
-                  {
-                    src: 'https://www.seerxo.com/favicon.svg',
-                    mimeType: 'image/svg+xml',
-                  },
-                ],
-              },
-            },
-          };
-
-          console.log(JSON.stringify(response));
-        } else if (request.method === 'tools/list') {
-          const response = {
-            jsonrpc: '2.0',
-            id: request.id,
-            result: {
-              tools: MCP_TOOLS,
-            },
-          };
-
-          console.log(JSON.stringify(response));
-        } else if (request.method === 'tools/call') {
-          const { name, arguments: toolArgs } = request.params;
-
-          if (name === 'generate_etsy_seo') {
-            const result = await generateEtsySEO(
-              toolArgs.product_name,
-              toolArgs.category || ''
-            );
-
-            const usageInfo = result.usage
-              ? (() => {
-                  const summary = buildQuotaSummary(result.usage);
-                  return `\n\n---\n**Credits:** ${summary.headline} (${summary.detail})`;
-                })()
-              : '';
-
-            const response = {
-              jsonrpc: '2.0',
-              id: request.id,
-              result: {
-                content: [
-                  {
-                    type: 'text',
-                    text: `# Etsy SEO Results for "${toolArgs.product_name}"\n\n## 📝 SEO Title\n${result.title}\n\n## 📄 Product Description\n${result.description}\n\n## 🏷️ Tags (13)\n${result.tags.join(
-                      ', '
-                    )}${usageInfo}`,
-                  },
-                ],
-                structuredContent: {
-                  title: result.title,
-                  description: result.description,
-                  tags: result.tags,
-                  ...(result.usage ? { usage: result.usage } : {}),
-                },
-              },
-            };
-
-            console.log(JSON.stringify(response));
-          } else if (name === 'seerxo_suggest_keywords') {
-            const data = await callSeerxoV1('/v1/keywords', buildListingPayload(toolArgs));
-            console.log(JSON.stringify({
-              jsonrpc: '2.0',
-              id: request.id,
-              result: {
-                content: [{ type: 'text', text: formatKeywordsResult(data) }],
-                structuredContent: data,
-              },
-            }));
-          } else if (name === 'seerxo_analyze_listing' || name === 'seerxo_optimize_listing') {
-            const isAnalyze = name === 'seerxo_analyze_listing';
-            const payload = buildListingPayload(toolArgs);
-            if (!isAnalyze && toolArgs.mode) payload.mode = toolArgs.mode;
-            const data = await callSeerxoV1(isAnalyze ? '/v1/analyze' : '/v1/optimize', payload);
-
-            const response = {
-              jsonrpc: '2.0',
-              id: request.id,
-              result: {
-                content: [
-                  {
-                    type: 'text',
-                    text: isAnalyze ? formatAnalyzeResult(data) : formatOptimizeResult(data),
-                  },
-                ],
-                structuredContent: data,
-              },
-            };
-
-            console.log(JSON.stringify(response));
-          } else if (name === 'seerxo_quota') {
-            const quota = await fetchQuota();
-            console.log(JSON.stringify({
-              jsonrpc: '2.0',
-              id: request.id,
-              result: {
-                content: [{ type: 'text', text: JSON.stringify(quota, null, 2) }],
-                structuredContent: quota,
-              },
-            }));
-          } else {
-            throw new Error(`Unknown tool: ${name}`);
-          }
-        }
-      } catch (error) {
-        if (
-          error instanceof SyntaxError ||
-          UNEXPECTED_TOKEN_REGEX.test(error.message || '')
-        ) {
-          console.error(
-            '[seerxo] Invalid JSON received, ignoring.'
-          );
-          continue;
-        }
-        const errorResponse = {
-          jsonrpc: '2.0',
-          id: request?.id ?? null,
-          error: {
-            code: -32603,
-            message: error.message,
-            ...(error.requestId ? { data: { requestId: error.requestId } } : {}),
-          },
-        };
-
-        console.log(JSON.stringify(errorResponse));
-      }
+      await processMcpMessage(line);
     }
   });
 
