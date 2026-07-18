@@ -107,11 +107,11 @@ same entitlement. Re-check current availability before giving plan-specific guid
   skill header reads `https://github.com/seerxo.png` rather than the skill icon metadata.
 - [x] Publish crawler-safe privacy, support, terms, and status pages.
 - [x] Prepare a password-based directory reviewer flow without MFA or email verification.
-- [ ] Enable the reviewer account secrets in production and run every protected tool.
+- [x] Enable the reviewer account secrets in production, verify OAuth, and run every protected tool.
 - [ ] Submit to the Claude Connectors Directory.
 - [ ] Submit the OpenAI app-plus-skill plugin after identity and domain verification.
 
-The last three items require publisher account access. Do not mark them complete from
+The last two items require publisher account access. Do not mark them complete from
 code-only validation or include reviewer credentials in Git, logs, screenshots, or prompts.
 
 ## Directory submission packet
