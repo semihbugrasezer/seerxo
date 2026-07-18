@@ -103,7 +103,7 @@ same entitlement. Re-check current availability before giving plan-specific guid
 - [x] Publish the Smithery skill at `seerxo/etsy-seo` with the branded skill assets.
 - [x] Publish and scan the Smithery server against `https://api.seerxo.com/mcp`.
 - [x] Add the Smithery backlink and npm weekly-download badges to the repository README.
-- [ ] Upload `assets/avatar.png` as the GitHub `seerxo` organization avatar; Smithery's
+- [x] Upload `assets/avatar.png` as the GitHub `seerxo` organization avatar; Smithery's
   skill header reads `https://github.com/seerxo.png` rather than the skill icon metadata.
 - [ ] Confirm privacy policy, support page, test account, and directory screenshots.
 - [ ] Submit to the Claude Connectors Directory.
