@@ -431,7 +431,7 @@ const printCliBanner = () => {
 };
 
 const SKILL_NAME = 'seerxo-etsy-seo';
-const bundledSkillUrl = new URL('./skills/seerxo-etsy-seo/SKILL.md', import.meta.url);
+const bundledSkillUrl = new URL('./skills/seerxo-etsy-seo/', import.meta.url);
 
 const skillTargetDir = (projectScope) =>
   projectScope
@@ -473,9 +473,7 @@ const runSkillCommand = async (extraArgs = []) => {
 
   if (action === 'add' || action === 'install') {
     try {
-      const contents = await fsPromises.readFile(bundledSkillUrl, 'utf8');
-      await fsPromises.mkdir(targetDir, { recursive: true });
-      await fsPromises.writeFile(targetPath, contents, 'utf8');
+      await fsPromises.cp(bundledSkillUrl, targetDir, { recursive: true, force: true });
       console.log(`Installed Seerxo Etsy SEO skill to ${scopeLabel}.`);
       console.log(`  ${targetPath}`);
       console.log('Restart Claude Code, then ask: "Generate an Etsy listing for ...".');

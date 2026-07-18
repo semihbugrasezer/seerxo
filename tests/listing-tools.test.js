@@ -1,5 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
+import { access, mkdtemp, rm } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import {
   MCP_TOOLS,
   LISTING_TOOLS,
@@ -213,5 +216,29 @@ describe('cli listing commands', () => {
 
     assert.ok(!failed);
     assert.ok(lines.join('\n').includes('seerxo optimize'));
+  });
+
+  it('installs the complete Claude Code skill bundle', async () => {
+    const originalCwd = process.cwd();
+    const originalLog = console.log;
+    const projectDir = await mkdtemp(path.join(os.tmpdir(), 'seerxo-skill-'));
+
+    try {
+      process.chdir(projectDir);
+      console.log = () => {};
+      await handleCli(['skill', 'add', '--project']);
+
+      const skillDir = path.join(projectDir, '.claude', 'skills', 'seerxo-etsy-seo');
+      await Promise.all([
+        access(path.join(skillDir, 'SKILL.md')),
+        access(path.join(skillDir, 'references', 'remote-mcp.md')),
+        access(path.join(skillDir, 'assets', 'seerxo.svg')),
+        access(path.join(skillDir, 'assets', 'seerxo-banner.svg')),
+      ]);
+    } finally {
+      console.log = originalLog;
+      process.chdir(originalCwd);
+      await rm(projectDir, { recursive: true, force: true });
+    }
   });
 });
