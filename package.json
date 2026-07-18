@@ -11,7 +11,7 @@
   "scripts": {
     "start": "node bin/seerxo.js",
     "test": "NODE_ENV=test node --test",
-    "lint": "node --check mcp-server.js && node --check utils.js && node --check scripts/validate-package-files.mjs",
+    "lint": "node --check mcp-server.js && node --check utils.js && node --check src/mcp/tools.js && node --check src/formatters/listing.js && node --check scripts/validate-package-files.mjs",
     "build": "node scripts/validate-package-files.mjs"
   },
   "keywords": [
@@ -51,6 +51,7 @@
   },
   "files": [
     "mcp-server.js",
+    "src",
     "bin/seerxo.js",
     "bin/seerxo-mcp.js",
     "skills/seerxo-etsy-seo",

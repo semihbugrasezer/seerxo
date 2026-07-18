@@ -11,6 +11,15 @@ import { execFileSync, spawn } from 'node:child_process';
 import chalk from 'chalk';
 import open from 'open';
 import { DEFAULT_HOST, normalizeHost } from './utils.js';
+import { LISTING_TOOLS, MCP_TOOLS } from './src/mcp/tools.js';
+import {
+  formatAnalyzeResult,
+  formatKeywordsResult,
+  formatOptimizeResult,
+} from './src/formatters/listing.js';
+
+export { LISTING_TOOLS, MCP_TOOLS };
+export { formatAnalyzeResult, formatKeywordsResult, formatOptimizeResult };
 
 function boxen(content, options = {}) {
   const title = options.title ? ` ${options.title} ` : '';
@@ -27,6 +36,7 @@ function boxen(content, options = {}) {
 }
 
 function openUrlInBrowser(url) {
+  if (process.env.SEERXO_DISABLE_BROWSER === '1') return;
   try {
     open(url).catch(() => {
       // Fallback: try platform-specific commands
@@ -43,13 +53,22 @@ function openUrlInBrowser(url) {
 const require = createRequire(import.meta.url);
 const pkg = require('./package.json');
 
-const CONFIG_DIR = path.join(os.homedir(), '.seerxo-mcp');
+const CONFIG_DIR = process.env.SEERXO_CONFIG_DIR
+  ? path.resolve(process.env.SEERXO_CONFIG_DIR)
+  : path.join(os.homedir(), '.seerxo-mcp');
 const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
 const clientVersion = process.env.SEERXO_CLIENT_VERSION || pkg.version;
-const LOGIN_POLL_INTERVAL_MS = 4000;
-const LOGIN_TIMEOUT_MS = 15 * 60 * 1000;
+const LOGIN_POLL_INTERVAL_MS = Number(process.env.SEERXO_LOGIN_POLL_INTERVAL_MS) || 4000;
+const LOGIN_TIMEOUT_MS = Number(process.env.SEERXO_LOGIN_TIMEOUT_MS) || 15 * 60 * 1000;
 const isInteractiveSession = process.stdin.isTTY;
 const MIN_API_KEY_SECRET_LENGTH = 16;
+const MCP_PROTOCOL_VERSION = '2025-11-25';
+const SUPPORTED_MCP_PROTOCOL_VERSIONS = new Set([
+  MCP_PROTOCOL_VERSION,
+  '2025-06-18',
+  '2025-03-26',
+  '2024-11-05',
+]);
 const UNEXPECTED_TOKEN_REGEX = /Unexpected token/;
 const shouldSkipLiveQuota = () => process.env.SEERXO_SKIP_LIVE_QUOTA === '1';
 
@@ -261,7 +280,12 @@ async function printStatusWithQuota() {
   }
 }
 
-export function formatApiErrorMessage(message, status) {
+const appendRequestId = (message, requestId) => {
+  if (!requestId || String(message).includes(requestId)) return message;
+  return `${message} [request ${requestId}]`;
+};
+
+export function formatApiErrorMessage(message, status, requestId) {
   const normalizedMessage = typeof message === 'string' ? message : '';
   const looksLikeInvalidKey =
     status === 401 ||
@@ -272,10 +296,10 @@ export function formatApiErrorMessage(message, status) {
 
   if (looksLikeInvalidKey) {
     const detail = normalizedMessage ? ` (${normalizedMessage})` : '';
-    return `Invalid API key${detail}. Run "seerxo login" to refresh credentials.`;
+    return appendRequestId(`Invalid API key${detail}. Run "seerxo login" to refresh credentials.`, requestId);
   }
 
-  return normalizedMessage || 'Failed to generate Etsy SEO content';
+  return appendRequestId(normalizedMessage || 'Failed to generate Etsy SEO content', requestId);
 }
 
 export async function initConfig() {
@@ -319,15 +343,22 @@ function isSafeHttpUrl(value) {
   }
 }
 
-export function setRuntimeConfig({ email, apiKey, host }) {
-  if (email) userEmail = email;
-  if (apiKey) rawApiKey = apiKey;
-  if (host) apiHost = normalizeHost(host);
+export function setRuntimeConfig(nextConfig = {}) {
+  const { email, apiKey, host } = nextConfig;
+  if (Object.hasOwn(nextConfig, 'email')) userEmail = email || null;
+  if (Object.hasOwn(nextConfig, 'apiKey')) rawApiKey = apiKey || null;
+  if (Object.hasOwn(nextConfig, 'host') && host) apiHost = normalizeHost(host);
 
   syncApiKeyState();
 }
 
-const getApiEndpoint = () => `${apiHost}/mcp/generate`;
+export const getRuntimeConfigState = () => ({
+  email: userEmail,
+  host: apiHost,
+  hasValidApiKey,
+});
+
+export const getGenerateEndpoint = () => `${apiHost}/v1/generate`;
 
 export const getFlagValue = (flag, list = []) => {
   const index = list.indexOf(`--${flag}`);
@@ -349,10 +380,14 @@ export const fetchJson = async (url, options = {}) => {
   }
 
   if (!response.ok) {
-    const message =
+    const requestId = data?.requestId || response.headers.get('x-request-id') || null;
+    const rawMessage =
       data?.error || data?.message || `Request failed (${response.status})`;
+    const message = appendRequestId(rawMessage, requestId);
     const error = new Error(message);
     error.status = response.status;
+    error.code = data?.code || null;
+    error.requestId = requestId;
     error.payload = data;
     throw error;
   }
@@ -687,12 +722,12 @@ const runLoginCommand = async (extraArgs = [], options = {}) => {
   }
 };
 
-export function generateSignature(payload) {
-  const timestamp = Date.now().toString();
-  const message = JSON.stringify(payload) + timestamp;
+export function generateSignature(payload, timestampValue = Date.now()) {
+  const timestamp = String(timestampValue);
   const signature = crypto
     .createHmac('sha256', apiKeySecret || '')
-    .update(message)
+    .update(JSON.stringify(payload))
+    .update(timestamp)
     .digest('hex');
   return { signature, timestamp };
 }
@@ -732,7 +767,7 @@ async function generateEtsySEO(productName, category = '') {
 
       const { signature, timestamp } = generateSignature(payload);
 
-      const response = await fetch(getApiEndpoint(), {
+      const response = await fetch(getGenerateEndpoint(), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -748,17 +783,22 @@ async function generateEtsySEO(productName, category = '') {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
+        const requestId = data?.requestId || response.headers.get('x-request-id') || null;
         const rawMessage =
           data?.error || data?.message || `API error: ${response.status}`;
-        const message = formatApiErrorMessage(rawMessage, response.status);
+        const message = formatApiErrorMessage(rawMessage, response.status, requestId);
         const payload = {
           message,
           status: response.status,
+          code: data?.code || null,
+          requestId,
           paymentLink: data?.upgrade?.paymentLink || data?.paymentLink || null,
         };
         const error = new Error(message);
         error.payload = payload;
         error.status = response.status;
+        error.code = payload.code;
+        error.requestId = requestId;
         throw error;
       }
 
@@ -779,9 +819,14 @@ async function generateEtsySEO(productName, category = '') {
       return result;
     } catch (error) {
       seoCache.delete(cacheKey);
-      throw new Error(error.message || 'Failed to generate Etsy SEO content', {
+      const wrapped = new Error(error.message || 'Failed to generate Etsy SEO content', {
         cause: error,
       });
+      wrapped.status = error.status;
+      wrapped.code = error.code;
+      wrapped.requestId = error.requestId;
+      wrapped.payload = error.payload;
+      throw wrapped;
     }
   })();
 
@@ -792,8 +837,8 @@ async function generateEtsySEO(productName, category = '') {
   return result;
 }
 
-// Shared caller for the versioned REST API (/v1/*) — same HMAC scheme as
-// /mcp/generate. The response contracts live server-side; tools wrap them 1:1.
+// Shared caller for the versioned REST API (/v1/*). The response contracts
+// live server-side; tools wrap them 1:1.
 async function callSeerxoV1(pathname, payload) {
   if (!apiKeyHeader || !apiKeySecret) {
     throw new Error('API key is not set. Run "seerxo configure" first.');
@@ -818,7 +863,15 @@ async function callSeerxoV1(pathname, payload) {
     }
     return data.data;
   } catch (error) {
-    throw new Error(formatApiErrorMessage(error.message, error.status), { cause: error });
+    const wrapped = new Error(
+      formatApiErrorMessage(error.message, error.status, error.requestId),
+      { cause: error }
+    );
+    wrapped.status = error.status;
+    wrapped.code = error.code;
+    wrapped.requestId = error.requestId;
+    wrapped.payload = error.payload;
+    throw wrapped;
   }
 }
 
@@ -834,288 +887,6 @@ export function buildListingPayload(toolArgs = {}) {
   return payload;
 }
 
-const LISTING_INPUT_PROPERTIES = {
-  title: { type: 'string', description: 'The listing title, exactly as it appears on Etsy.' },
-  description: { type: 'string', description: 'The listing description.' },
-  tags: {
-    type: 'array',
-    items: { type: 'string' },
-    description: 'The listing tags (up to 13).',
-  },
-  product_name: {
-    type: 'string',
-    description: 'What the product is (e.g. "handmade ceramic coffee mug"). Improves keyword-coverage checks.',
-  },
-  url: {
-    type: 'string',
-    description:
-      'Optional Etsy listing URL. A URL alone is NOT enough — Etsy blocks server-side fetching, so always pass the listing fields you can see. The URL adds the product name from its slug.',
-  },
-};
-
-const STRING_ARRAY_SCHEMA = {
-  type: 'array',
-  items: { type: 'string' },
-};
-
-const SUB_SCORES_SCHEMA = {
-  type: 'object',
-  description: 'SEO scores from 0 to 100 for each listing area.',
-  properties: {
-    title: { type: 'number', description: 'Title SEO score from 0 to 100.' },
-    tags: { type: 'number', description: 'Tags SEO score from 0 to 100.' },
-    description: { type: 'number', description: 'Description SEO score from 0 to 100.' },
-    completeness: { type: 'number', description: 'Listing completeness score from 0 to 100.' },
-  },
-  required: ['title', 'tags', 'description', 'completeness'],
-};
-
-const WEAK_POINT_SCHEMA = {
-  type: 'object',
-  properties: {
-    id: { type: 'string', description: 'Stable identifier for the failed SEO check.' },
-    field: { type: 'string', description: 'Listing field that needs improvement.' },
-    severity: { type: 'string', enum: ['high', 'medium', 'low'], description: 'Priority of the finding.' },
-    reason: { type: 'string', description: 'Human-readable explanation of the finding.' },
-    fix: { type: 'string', description: 'Concrete action that resolves the finding.' },
-  },
-  required: ['id', 'field', 'severity', 'reason', 'fix'],
-};
-
-const AUDIT_OUTPUT_SCHEMA = {
-  type: 'object',
-  properties: {
-    seoScore: { type: 'number', description: 'Overall Etsy SEO score from 0 to 100.' },
-    subScores: SUB_SCORES_SCHEMA,
-    weakPoints: { type: 'array', items: WEAK_POINT_SCHEMA, description: 'Ranked SEO findings and fixes.' },
-    missingKeywords: { ...STRING_ARRAY_SCHEMA, description: 'Product keywords missing from the listing.' },
-    tagUtilization: {
-      type: 'object',
-      description: 'How effectively the 13 Etsy tag slots are used.',
-      properties: {
-        used: { type: 'number', description: 'Number of tag slots currently used.' },
-        max: { type: 'number', description: 'Maximum Etsy tag slots available.' },
-        duplicates: { ...STRING_ARRAY_SCHEMA, description: 'Duplicate tags.' },
-        tooBroad: { ...STRING_ARRAY_SCHEMA, description: 'Single-word tags that are too broad.' },
-        overLong: { ...STRING_ARRAY_SCHEMA, description: 'Tags longer than Etsy allows.' },
-      },
-      required: ['used', 'max', 'duplicates', 'tooBroad', 'overLong'],
-    },
-  },
-  required: ['seoScore', 'subScores', 'weakPoints', 'missingKeywords', 'tagUtilization'],
-};
-
-const LISTING_OUTPUT_SCHEMA = {
-  type: 'object',
-  properties: {
-    title: { type: 'string', description: 'SEO-optimized Etsy listing title.' },
-    description: { type: 'string', description: 'SEO-optimized Etsy listing description.' },
-    tags: { ...STRING_ARRAY_SCHEMA, description: 'SEO-optimized Etsy tags.' },
-  },
-  required: ['title', 'description', 'tags'],
-};
-
-const GENERATE_TOOL = {
-  name: 'generate_etsy_seo',
-  title: 'Generate Etsy SEO Listing',
-  description: 'Generate a complete SEO-optimized Etsy listing with a title, description, and 13 tags from a product name and optional category.',
-  inputSchema: {
-    type: 'object',
-    properties: {
-      product_name: {
-        type: 'string',
-        description: 'Name of the product to optimize.',
-      },
-      category: {
-        type: 'string',
-        description: 'Optional Etsy category (for example, "Home & Living").',
-      },
-    },
-    required: ['product_name'],
-  },
-  outputSchema: LISTING_OUTPUT_SCHEMA,
-  annotations: {
-    title: 'Generate Etsy SEO Listing',
-    readOnlyHint: false,
-    destructiveHint: false,
-    idempotentHint: false,
-    openWorldHint: true,
-  },
-};
-
-export const LISTING_TOOLS = [
-  {
-    name: 'seerxo_suggest_keywords',
-    title: 'Suggest Etsy Keywords',
-    description:
-      'Get ranked Etsy keyword suggestions for a product or seed phrase, sampled from Etsy\'s own search autocomplete (relative demand rank, never fabricated volumes). Each keyword comes with a placement recommendation (title / tags / description) and whether the listing already uses it. Pass the listing fields too when you have them for better placement advice.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        seed: { type: 'string', description: 'Seed phrase to expand (e.g. "ceramic mug"). Falls back to product_name or title.' },
-        ...LISTING_INPUT_PROPERTIES,
-      },
-      required: [],
-    },
-    outputSchema: {
-      type: 'object',
-      properties: {
-        seed: { type: 'string', description: 'Normalized seed phrase used for suggestions.' },
-        confidence: { type: 'string', enum: ['medium', 'low'], description: 'Confidence in the available suggestions.' },
-        keywords: {
-          type: 'array',
-          description: 'Keyword suggestions in Etsy autosuggest demand order.',
-          items: {
-            type: 'object',
-            properties: {
-              keyword: { type: 'string', description: 'Suggested keyword phrase.' },
-              demandRank: { type: 'number', description: 'Relative rank from Etsy autosuggest.' },
-              placement: { type: 'string', enum: ['title', 'tags', 'description'], description: 'Recommended listing placement.' },
-              inListing: { type: 'boolean', description: 'Whether the listing already contains the keyword.' },
-            },
-            required: ['keyword', 'demandRank', 'placement', 'inListing'],
-          },
-        },
-        source: { type: 'string', description: 'Source used for keyword suggestions.' },
-      },
-      required: ['seed', 'confidence', 'keywords', 'source'],
-    },
-    annotations: {
-      title: 'Suggest Etsy Keywords',
-      readOnlyHint: false,
-      destructiveHint: false,
-      idempotentHint: false,
-      openWorldHint: true,
-    },
-  },
-  {
-    name: 'seerxo_analyze_listing',
-    title: 'Analyze Etsy Listing',
-    description:
-      'Audit an existing Etsy listing. Returns an SEO score (0-100) with per-field sub-scores, ranked weak points (each with severity and a concrete fix), missing keywords, and tag-slot utilization. Call it with whatever listing fields are available (title, tags, description); at least one is required.',
-    inputSchema: { type: 'object', properties: LISTING_INPUT_PROPERTIES, required: [] },
-    outputSchema: AUDIT_OUTPUT_SCHEMA,
-    annotations: {
-      title: 'Analyze Etsy Listing',
-      readOnlyHint: true,
-      destructiveHint: false,
-      idempotentHint: true,
-      openWorldHint: true,
-    },
-  },
-  {
-    name: 'seerxo_optimize_listing',
-    title: 'Optimize Etsy Listing',
-    description:
-      'Rewrite an Etsy listing to fix its audit findings: improved title, description, and tag set, each mapped to the finding it resolves, with a before/after SEO score. Etsy limits (140-char title, 13 tags, 20 chars per tag) are enforced server-side and the result never scores below the original. Provide the current listing fields.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        ...LISTING_INPUT_PROPERTIES,
-        mode: {
-          type: 'string',
-          enum: ['full', 'title_only', 'description_only', 'tags_only'],
-          description: 'Which field(s) to rewrite. Defaults to "full" (title + description + tags). Use a single-field mode to rewrite just that field and leave the rest untouched.',
-        },
-      },
-      required: [],
-    },
-    outputSchema: {
-      type: 'object',
-      properties: {
-        before: {
-          type: 'object',
-          description: 'Audit summary before optimization.',
-          properties: {
-            seoScore: { type: 'number', description: 'Original SEO score from 0 to 100.' },
-            subScores: SUB_SCORES_SCHEMA,
-            weakPoints: { type: 'array', items: WEAK_POINT_SCHEMA, description: 'Original SEO findings.' },
-          },
-          required: ['seoScore', 'subScores', 'weakPoints'],
-        },
-        optimized: LISTING_OUTPUT_SCHEMA,
-        after: {
-          type: 'object',
-          description: 'Audit summary after optimization.',
-          properties: {
-            seoScore: { type: 'number', description: 'Optimized SEO score from 0 to 100.' },
-            subScores: SUB_SCORES_SCHEMA,
-            weakPoints: { type: 'array', items: WEAK_POINT_SCHEMA, description: 'SEO findings that remain.' },
-          },
-          required: ['seoScore', 'subScores', 'weakPoints'],
-        },
-        resolved: { ...STRING_ARRAY_SCHEMA, description: 'Finding IDs resolved by the rewrite.' },
-        unresolved: { ...STRING_ARRAY_SCHEMA, description: 'Finding IDs still present after the rewrite.' },
-        diff: { type: 'object', description: 'Before and after values for each listing field.' },
-        fallback: { type: 'boolean', description: 'Whether the original listing was kept to prevent a score regression.' },
-        mode: { type: 'string', enum: ['full', 'title_only', 'description_only', 'tags_only'], description: 'Optimization mode that was applied.' },
-      },
-      required: ['before', 'optimized', 'after', 'resolved', 'unresolved', 'diff', 'fallback', 'mode'],
-    },
-    annotations: {
-      title: 'Optimize Etsy Listing',
-      readOnlyHint: false,
-      destructiveHint: false,
-      idempotentHint: false,
-      openWorldHint: true,
-    },
-  },
-];
-
-export const MCP_TOOLS = [GENERATE_TOOL, ...LISTING_TOOLS];
-
-export function formatAnalyzeResult(data) {
-  const s = data.subScores || {};
-  const weakPoints = (data.weakPoints || [])
-    .map((wp, i) => `${i + 1}. [${wp.severity}] (${wp.field}) ${wp.reason} — fix: ${wp.fix}`)
-    .join('\n');
-  const util = data.tagUtilization || {};
-  const utilNotes = [
-    util.duplicates?.length ? `duplicates: ${util.duplicates.join(', ')}` : '',
-    util.overLong?.length ? `over 20 chars: ${util.overLong.join(', ')}` : '',
-    util.tooBroad?.length ? `single-word (too broad): ${util.tooBroad.join(', ')}` : '',
-  ].filter(Boolean).join(' · ');
-
-  return (
-    `# Listing Audit\n\n` +
-    `**SEO Score: ${data.seoScore}/100** — title ${s.title}, tags ${s.tags}, description ${s.description}, completeness ${s.completeness}\n\n` +
-    `## Weak points\n${weakPoints || 'None — this listing passes every check.'}\n\n` +
-    `## Missing keywords\n${(data.missingKeywords || []).join(', ') || 'none'}\n\n` +
-    `## Tag slots\n${util.used}/${util.max} used${utilNotes ? ` (${utilNotes})` : ''}`
-  );
-}
-
-export function formatOptimizeResult(data) {
-  const before = data.before || {};
-  const after = data.after || {};
-  const optimized = data.optimized || {};
-  const fallbackNote = data.fallback
-    ? '\n\n> Note: the rewrite did not beat the original listing, so the original fields were kept.'
-    : '';
-  const modeNote = data.mode && data.mode !== 'full'
-    ? ` · only the ${data.mode.replace('_only', '')} was rewritten`
-    : '';
-
-  return (
-    `# Optimized Listing\n\n` +
-    `**SEO Score: ${before.seoScore} → ${after.seoScore}** · resolved ${data.resolved?.length ?? 0} finding(s)` +
-    `${data.unresolved?.length ? `, still open: ${data.unresolved.join(', ')}` : ''}${modeNote}${fallbackNote}\n\n` +
-    `## Title\n${optimized.title}\n\n` +
-    `## Description\n${optimized.description}\n\n` +
-    `## Tags (${(optimized.tags || []).length})\n${(optimized.tags || []).join(', ')}`
-  );
-}
-
-export function formatKeywordsResult(data) {
-  const rows = (data.keywords || [])
-    .map((k) => `${k.demandRank}. **${k.keyword}** → ${k.placement}${k.inListing ? ' (already in listing)' : ''}`)
-    .join('\n');
-  return (
-    `# Keyword Suggestions for "${data.seed}"\n\n` +
-    `Source: Etsy search autocomplete (relative demand order) · confidence: ${data.confidence}\n\n` +
-    `${rows || 'No suggestions found for this seed.'}`
-  );
-}
 
 async function promptLoginIfNecessary() {
   if (!userEmail || !hasValidApiKey) {
@@ -1501,8 +1272,9 @@ export function startMcpServer() {
     for (const line of lines) {
       if (!line.trim()) continue;
 
+      let request = null;
       try {
-        const request = JSON.parse(line);
+        request = JSON.parse(line);
 
         if (request.method === 'initialize') {
           if (request.params?.initializationOptions?.email) {
@@ -1520,7 +1292,9 @@ export function startMcpServer() {
             jsonrpc: '2.0',
             id: request.id,
             result: {
-              protocolVersion: '2024-11-05',
+              protocolVersion: SUPPORTED_MCP_PROTOCOL_VERSIONS.has(request.params?.protocolVersion)
+                ? request.params.protocolVersion
+                : MCP_PROTOCOL_VERSION,
               capabilities: {
                 tools: {},
               },
@@ -1620,6 +1394,16 @@ export function startMcpServer() {
             };
 
             console.log(JSON.stringify(response));
+          } else if (name === 'seerxo_quota') {
+            const quota = await fetchQuota();
+            console.log(JSON.stringify({
+              jsonrpc: '2.0',
+              id: request.id,
+              result: {
+                content: [{ type: 'text', text: JSON.stringify(quota, null, 2) }],
+                structuredContent: quota,
+              },
+            }));
           } else {
             throw new Error(`Unknown tool: ${name}`);
           }
@@ -1636,10 +1420,11 @@ export function startMcpServer() {
         }
         const errorResponse = {
           jsonrpc: '2.0',
-          id: null,
+          id: request?.id ?? null,
           error: {
             code: -32603,
             message: error.message,
+            ...(error.requestId ? { data: { requestId: error.requestId } } : {}),
           },
         };
 

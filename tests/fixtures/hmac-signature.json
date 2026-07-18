@@ -1,0 +1,11 @@
+{
+  "secret": "0123456789abcdef",
+  "apiKey": "fixture-key.0123456789abcdef",
+  "timestamp": "1784419200000",
+  "payload": {
+    "email": "fixture@seerxo.test",
+    "product_name": "Handmade ceramic mug",
+    "category": "Home & Living"
+  },
+  "signature": "bbe79b0fc7eb792af103cdb90fe35a96acb4444373749f9aa8569c754eb96bd6"
+}

@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { access, mkdtemp, rm } from 'node:fs/promises';
+import { access, mkdtemp, readFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {
@@ -10,7 +10,12 @@ import {
   formatAnalyzeResult,
   formatOptimizeResult,
   formatKeywordsResult,
+  fetchJson,
+  generateSignature,
+  getGenerateEndpoint,
+  getRuntimeConfigState,
   handleCli,
+  setRuntimeConfig,
 } from '../mcp-server.js';
 
 describe('listing tool definitions', () => {
@@ -20,6 +25,7 @@ describe('listing tool definitions', () => {
       'seerxo_suggest_keywords',
       'seerxo_analyze_listing',
       'seerxo_optimize_listing',
+      'seerxo_quota',
     ]);
     for (const tool of MCP_TOOLS) {
       assert.strictEqual(tool.outputSchema.type, 'object', `${tool.name} output schema`);
@@ -77,6 +83,63 @@ describe('buildListingPayload', () => {
 
   it('omits missing fields instead of sending empties', () => {
     assert.deepStrictEqual(buildListingPayload({ title: 'T', tags: 'not-array' }), { title: 'T' });
+  });
+});
+
+describe('versioned API contract', () => {
+  it('uses the canonical generation endpoint', () => {
+    setRuntimeConfig({ host: 'https://api.seerxo.com' });
+    assert.strictEqual(getGenerateEndpoint(), 'https://api.seerxo.com/v1/generate');
+  });
+
+  it('matches the backend HMAC fixture byte-for-byte', async () => {
+    const fixturePath = new URL('./fixtures/hmac-signature.json', import.meta.url);
+    const fixture = JSON.parse(await readFile(fixturePath, 'utf8'));
+    setRuntimeConfig({ apiKey: fixture.apiKey });
+
+    assert.deepStrictEqual(generateSignature(fixture.payload, fixture.timestamp), {
+      signature: fixture.signature,
+      timestamp: fixture.timestamp,
+    });
+  });
+
+  it('preserves backend correlation IDs on failed calls', async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () => ({
+      ok: false,
+      status: 500,
+      headers: new Headers({ 'x-request-id': 'req-cli-fixture' }),
+      json: async () => ({
+        success: false,
+        error: 'Internal server error',
+        code: 'internal_error',
+        requestId: 'req-cli-fixture',
+      }),
+    });
+
+    try {
+      await assert.rejects(fetchJson('https://api.seerxo.test/failure'), (error) => {
+        assert.strictEqual(error.requestId, 'req-cli-fixture');
+        assert.strictEqual(error.code, 'internal_error');
+        assert.match(error.message, /request req-cli-fixture/);
+        return true;
+      });
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it('clears in-process credentials during logout', () => {
+    setRuntimeConfig({ email: 'user@example.com', apiKey: 'fixture.0123456789abcdef' });
+    assert.strictEqual(getRuntimeConfigState().hasValidApiKey, true);
+
+    setRuntimeConfig({ email: null, apiKey: null });
+
+    assert.deepStrictEqual(getRuntimeConfigState(), {
+      email: null,
+      host: 'https://api.seerxo.com',
+      hasValidApiKey: false,
+    });
   });
 });
 

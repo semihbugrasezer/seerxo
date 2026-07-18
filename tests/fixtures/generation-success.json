@@ -1,0 +1,32 @@
+{
+  "success": true,
+  "data": {
+    "title": "Test Handmade ceramic coffee mug Title",
+    "title_alternatives": [
+      "Alt Test Handmade ceramic coffee mug Title 1",
+      "Alt Test Handmade ceramic coffee mug Title 2"
+    ],
+    "description": "Test description for Handmade ceramic coffee mug in category Home & Living.",
+    "tags": ["test", "mock", "ai", "tag4", "tag5", "tag6", "tag7", "tag8", "tag9", "tag10", "tag11", "tag12", "tag13"],
+    "features": ["feature 1", "feature 2", "feature 3"],
+    "target_keywords": ["test keyword 1", "test keyword 2", "test keyword 3", "test keyword 4", "test keyword 5"],
+    "cross_sell": "Test cross-sell suggestion",
+    "suggested_attributes": {
+      "occasion": "Birthday",
+      "style": "Minimalist",
+      "color": "Gold",
+      "material": "Metal",
+      "recipient": "Women"
+    },
+    "shipping_tip": "Keep shipping under $6 for best visibility."
+  },
+  "usage": {
+    "limit": 10,
+    "remaining": 9,
+    "tier": "free",
+    "usageByChannel": {
+      "mcp": 1,
+      "web": 0
+    }
+  }
+}
