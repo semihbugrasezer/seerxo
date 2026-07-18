@@ -287,12 +287,13 @@ const appendRequestId = (message, requestId) => {
 
 export function formatApiErrorMessage(message, status, requestId) {
   const normalizedMessage = typeof message === 'string' ? message : '';
+  const lowerMessage = normalizedMessage.toLowerCase();
   const looksLikeInvalidKey =
     status === 401 ||
     status === 403 ||
-    /invalid api key|api key not found|api key.*inactive/i.test(
-      normalizedMessage
-    );
+    lowerMessage.includes('invalid api key') ||
+    lowerMessage.includes('api key not found') ||
+    (lowerMessage.includes('api key') && lowerMessage.includes('inactive'));
 
   if (looksLikeInvalidKey) {
     const detail = normalizedMessage ? ` (${normalizedMessage})` : '';
