@@ -53,7 +53,7 @@
     "mcp-server.js",
     "bin/seerxo.js",
     "bin/seerxo-mcp.js",
-    "skills/seerxo-etsy-seo/SKILL.md",
+    "skills/seerxo-etsy-seo",
     "utils.js",
     "README.md",
     "LICENSE"

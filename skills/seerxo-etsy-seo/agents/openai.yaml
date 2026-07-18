@@ -1,0 +1,14 @@
+interface:
+  display_name: "Seerxo Etsy SEO"
+  short_description: "Generate, audit, and optimize Etsy listings"
+  icon_small: "./assets/seerxo.svg"
+  icon_large: "./assets/seerxo.svg"
+  default_prompt: "Use $seerxo-etsy-seo to audit this Etsy listing and prioritize the highest-impact fixes."
+
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "seerxo"
+      description: "Seerxo remote MCP server for Etsy listing generation, audits, optimization, keywords, and quota."
+      transport: "streamable_http"
+      url: "https://api.seerxo.com/mcp"

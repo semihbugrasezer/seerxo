@@ -1,186 +1,140 @@
 ---
 name: seerxo-etsy-seo
-description: Generate, score, fix, or research keywords for an Etsy listing — front-loaded title (+ A/B variants), hook-first description, 13 search-optimized tags, an explainable 0-100 SEO score with ranked weak points, guided rewrites, and ranked keyword ideas — by calling the Seerxo CLI. Accepts a product phrase or a pasted Etsy listing URL. Use whenever the user wants an Etsy listing, Etsy SEO, an SEO score / listing audit, to fix or rank-up an existing listing, or Etsy keyword ideas.
+description: Generate, audit, optimize, and research keywords for Etsy listings through the Seerxo remote MCP server or CLI. Use when a user wants an Etsy title, description, 13 tags, SEO score, listing rewrite, keyword ideas, quota help, or help connecting and testing Seerxo with Claude or ChatGPT.
 ---
 
-# Seerxo · Etsy SEO
+![Seerxo](https://www.seerxo.com/favicon.svg)
 
-One CLI call turns a short product description into a complete, copy-paste-ready Etsy
-listing — or scores, fixes, or keyword-mines a listing that already exists. Always call
-the CLI — never hand-write the listing or invent a score — so output stays on-quota and
-consistent with the Seerxo web app, dashboard, and MCP server (they share credits).
+# Seerxo Etsy SEO
 
-## When to use
+Use Seerxo for listing output and scores. Do not hand-write a replacement listing or
+invent metrics when a Seerxo tool is available.
 
-Trigger when the user wants any of: an Etsy listing, Etsy SEO, a product title, a
-product description, Etsy tags, an SEO score / listing audit, to fix or rank-up an
-existing Etsy listing, or Etsy keyword ideas.
+## Select the available transport
 
-## Generate
+1. Prefer the Seerxo MCP tools when they are connected. The remote Streamable HTTP
+   endpoint is `https://api.seerxo.com/mcp`.
+2. Otherwise use the `seerxo` CLI and always request JSON output.
+3. If the user asks to connect, test, authenticate, or publish the remote server, read
+   [references/remote-mcp.md](references/remote-mcp.md) before answering.
 
-1. Build the product phrase from the user's own words — keep their wording, don't rewrite it.
-   - **Pasted Etsy listing URL?** If it contains a title slug
-     (`etsy.com/listing/123/boho-macrame-wall-hanging`), turn the slug into the product
-     phrase (`boho macrame wall hanging`). If it's a bare link with no slug
-     (`shopname.etsy.com/listing/123`), ask the user for the listing title instead of
-     calling the CLI — the API rejects bare URLs, so the call would only waste time.
-2. Infer an Etsy `--category` only when it's obvious, to sharpen keyword matching:
-   mug/candle/decor → `"Home & Living"`, necklace/ring → `"Jewelry"`, shirt/hoodie →
-   `"Clothing"`, sticker → `"Craft Supplies"`, card/print → `"Paper & Party Supplies"`,
-   bridesmaid/wedding → `"Weddings"`, dog/cat item → `"Pet Supplies"`, baby item →
-   `"Baby"`. Skip `--category` if unsure.
-3. Run (wrap each value in double quotes; escape any inner `"` as `\"`):
+Do not call a paid tool speculatively. Preserve the user's product facts and return the
+tool result without silently adding claims, materials, measurements, or keyword volumes.
+
+## Choose the action
+
+| Intent | MCP tool | CLI fallback | Usage |
+| --- | --- | --- | --- |
+| Create a listing | `generate_etsy_seo` | `seerxo generate` | 1 AI action |
+| Score an existing listing | `seerxo_analyze_listing` | `seerxo analyze` | Free |
+| Rewrite weak fields | `seerxo_optimize_listing` | `seerxo optimize` | 1 AI action |
+| Find keyword ideas | `seerxo_suggest_keywords` | `seerxo keywords` | 1 AI action |
+| Check account usage | `seerxo_quota` | `seerxo status` | Free |
+
+## Prepare inputs
+
+- Keep the user's product wording and factual details intact.
+- For an Etsy URL with a title slug, turn the slug into a product phrase. For a bare
+  listing URL, ask for the title or listing fields; Etsy blocks reliable server-side
+  listing fetches.
+- For an audit, provide at least one of `title`, `tags`, or `description`.
+  `product_name` alone is not a listing to audit.
+- Infer a category only when obvious, such as mug → `Home & Living`, ring → `Jewelry`,
+  shirt → `Clothing`, sticker → `Craft Supplies`, or wedding item → `Weddings`.
+
+## Generate a listing
+
+Call `generate_etsy_seo` with `product_name` and optional `category`.
+
+CLI fallback:
 
 ```bash
 seerxo generate --product "handmade ceramic coffee mug, speckled glaze, 12oz" --category "Home & Living" --json
 ```
 
-Always pass `--json` and parse the result. Shape:
+Present copy-paste-ready blocks in this order:
 
-```json
-{
-  "title": "…",
-  "title_alternatives": ["…", "…"],
-  "description": "…",
-  "tags": ["…", "…"],
-  "features": ["…"],
-  "target_keywords": ["…"],
-  "suggested_attributes": { "occasion": "…", "style": "…", "color": "…", "material": "…", "recipient": "…" },
-  "usage": { "current": 3, "limit": 300, "remaining": 297 }
-}
-```
+1. **Title** — one line, at most 140 characters.
+2. **Alternative titles** — include A/B variants when returned.
+3. **Tags (13)** — one comma-separated line; confirm every tag is at most 20 characters.
+4. **Description** — return the complete text.
+5. **Attributes**, **features**, **target keywords**, **shipping tip**, and **cross-sell**
+   — include only fields returned by Seerxo.
+6. **AI actions remaining** — summarize `usage.remaining` and `usage.limit`.
 
-### Present it — copy-paste ready
+Do not add, drop, deduplicate, or rewrite tags after generation.
 
-Format the result so the seller can paste each block straight into Etsy. Use these
-exact labels and keep it scannable:
+## Audit an existing listing
 
-- **Title** — `title` on a single line (it is already ≤140 chars, the Etsy limit).
-- **Alt titles (A/B)** — list `title_alternatives` when present, for split-testing.
-- **Tags (13)** — output as ONE comma-separated line (this is exactly what Etsy's tag
-  box accepts), then a short note confirming "13 tags, each ≤20 chars."
-- **Description** — the full `description`, ready to paste.
-- **Etsy attributes** — when present, list `suggested_attributes` as `Field: value`
-  (Occasion, Style, Color, Material, Recipient) so the seller can fill Etsy's attribute
-  dropdowns — these boost filter visibility.
-- **Features** — when present, list `features` as bullets (paste-ready listing highlights).
-- **Targets** — when present, list `target_keywords` (what the listing is built to rank for).
-- **Shipping tip & cross-sell** — when the JSON carries `shipping_tip` or `cross_sell`,
-  surface each as a one-line note; sellers act on these.
-- **Credits** — from `usage`, say "X of Y generations left this month."
+Call `seerxo_analyze_listing` with the listing fields the user supplied. This audit is
+rule-based, free, and does not consume an AI action.
 
-Ship exactly what the CLI returned — do not add, drop, or rewrite tags yourself. The CLI
-already enforces 13 tags, ≤20 chars, lowercase, and no duplicates; trust its output.
-
-## Score / audit an existing listing
-
-The user has a listing already and wants to know how it's doing — "score my listing",
-"audit this", "why isn't this ranking". **This is free and unlimited on every plan** —
-it never uses a generation credit, so call it freely, even just to check before/after.
-
-Gather whatever fields the user has (title, tags, description — at least one; a pasted
-listing URL adds the product name from its slug but doesn't replace the fields above,
-since Etsy blocks server-side fetches) and run:
+CLI fallback:
 
 ```bash
 seerxo analyze --title "Speckled Ceramic Coffee Mug" --tags "handmade mug,ceramic cup" --description "..." --json
 ```
 
-(`seerxo audit` is an alias for the same command.)
+Present:
 
-Shape:
+- overall `seoScore` out of 100 and the title, tags, description, and completeness scores;
+- weak points in severity order as `reason → fix`;
+- missing keywords without inventing search volume;
+- tag use as `used/13`, followed by duplicates, broad tags, and overlong tags.
 
-```json
-{
-  "seoScore": 62,
-  "subScores": { "title": 80, "tags": 40, "description": 100, "completeness": 66 },
-  "weakPoints": [{ "field": "tags", "severity": "high", "reason": "…", "fix": "…" }],
-  "missingKeywords": ["12oz"],
-  "tagUtilization": { "used": 7, "max": 13, "duplicates": [], "tooBroad": [], "overLong": [] }
-}
-```
+If no weak points are returned, say the listing passed the audit; do not manufacture work.
 
-Present: the overall `seoScore`/100, the four `subScores`, each `weakPoints` entry as
-`[severity] reason → fix`, `missingKeywords` the listing should work in, and
-`tagUtilization` as "X/13 tag slots used" with any duplicates/too-broad/over-long notes.
-If the score is already high and `weakPoints` is empty, say so plainly — don't invent
-issues to fill space.
+## Optimize weak fields
 
-## Fix it (optimize)
+Use `seerxo_optimize_listing` only when the user asks for a rewrite. Pass `mode` when the
+request targets one field: `title_only`, `description_only`, or `tags_only`; otherwise use
+`full`.
 
-Once the user has seen the audit (or asks directly to "fix"/"improve"/"rewrite" a
-listing), rewrite it. **This uses one credit** (same shared pool as `generate`) — unlike
-`analyze`, so don't call it speculatively; only when the user wants the rewrite.
+CLI fallback:
 
 ```bash
-seerxo optimize --title "Speckled Ceramic Coffee Mug" --tags "handmade mug,ceramic cup" --description "..." --json
+seerxo optimize --title "..." --tags "a,b,c" --description "..." --mode full --json
 ```
 
-The rewrite touches title + description + tags by default. If the user only wants ONE
-field fixed ("just fix the title"), pass `--mode`:
+Show the before/after score, resolved and unresolved finding IDs, then the rewritten
+copy-paste-ready fields. If `fallback` is true, explain that Seerxo kept the original
+because the rewrite did not improve the score.
 
-```bash
-seerxo optimize --title "..." --tags "a,b,c" --description "..." --mode title_only --json
-```
+## Research keywords
 
-`--mode` accepts `full` (default), `title_only`, `description_only`, or `tags_only` —
-untouched fields are returned exactly as given.
+Call `seerxo_suggest_keywords` with `seed`. Also pass the existing title, tags, or
+description when available so the result can mark terms already used.
 
-Shape:
-
-```json
-{
-  "before": { "seoScore": 62 },
-  "after": { "seoScore": 88 },
-  "optimized": { "title": "…", "description": "…", "tags": ["…"] },
-  "resolved": ["tags_count"],
-  "unresolved": [],
-  "fallback": false,
-  "mode": "full"
-}
-```
-
-Present the score change (`before.seoScore → after.seoScore`), how many findings were
-`resolved` (and any still `unresolved`), then the rewritten fields — copy-paste ready,
-same formatting rules as Generate. If `fallback` is `true`, say plainly that the rewrite
-didn't beat the original, so the original was kept (the score never regresses).
-
-## Find more keywords
-
-"What else should I tag this with" / "keyword ideas for X" → run:
+CLI fallback:
 
 ```bash
 seerxo keywords --seed "ceramic mug" --json
 ```
 
-Pass the listing's `--title`/`--tags`/`--description` too when available — it marks
-which suggestions are already in the listing vs. missing. Shape:
+Present keywords in `demandRank` order with their placement recommendation and whether
+they already appear in the listing. Treat rankings as relative Etsy autocomplete demand;
+never claim an absolute search-volume number.
 
-```json
-{
-  "seed": "ceramic mug",
-  "confidence": "medium",
-  "keywords": [{ "keyword": "ceramic mug set", "demandRank": 1, "placement": "title", "inListing": false }]
-}
-```
+## Handle authentication and quota
 
-Present as a ranked list (`demandRank` order): `keyword → placement recommendation`,
-flagging which are already in the listing. These are relative-demand ranks sampled from
-Etsy's own search autocomplete — never state or imply an absolute search-volume number.
+- Remote discovery and `seerxo_analyze_listing` work without authentication.
+- Generation, optimization, keyword research, and quota require a Seerxo API key.
+  Send it as a Bearer credential or store it in the connector's secret configuration.
+- Never print, log, or place an API key directly in a user-visible URL.
+- Use the product term **AI actions**: Free includes 5 per month and Premium includes up
+  to 300 per month; audits remain free on both plans.
 
-## Errors → the exact fix
+## Fix common errors
 
-- `command not found: seerxo` → tell the user to run `npm install -g seerxo`.
-- "Email is not set" / "Invalid API key" / "Run seerxo login" → run `seerxo login`
-  (opens a browser for Google sign-in), then retry. To inspect state: `seerxo status`.
-- "Monthly quota exceeded" → the account is out of AI-action credits (this only happens
-  on `generate`/`optimize`/`keywords` — `analyze` is unaffected); upgrade at
-  https://www.seerxo.com/pricing (Free = 5/month, Premium = up to 300/month).
-- Invalid `--mode` value → the CLI returns the accepted list; re-run with one of
-  `full` / `title_only` / `description_only` / `tags_only`.
+- `command not found: seerxo` → run `npm install -g seerxo`.
+- Missing or invalid API key → run `seerxo login`, then retry; inspect with `seerxo status`.
+- Monthly or daily limit reached → do not retry the paid action; show the returned usage
+  and point to `https://www.seerxo.com/pricing`.
+- MCP connection failure → run the Inspector checks in
+  [references/remote-mcp.md](references/remote-mcp.md).
+- Invalid optimize mode → use `full`, `title_only`, `description_only`, or `tags_only`.
 
-## Multiple listings
+## Process multiple listings
 
-If the user lists several products or listings, run one CLI call per item and present
-each result under its own heading. One `generate`, `optimize`, or `keywords` call = one
-credit; `analyze` calls are free, however many you run.
+Run one action per listing and keep each result under its own heading. Confirm the count
+before running multiple paid actions; audits can run freely, subject to rate limits.
