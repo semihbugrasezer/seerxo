@@ -1434,10 +1434,11 @@ async function processMcpMessage(line) {
       id: request?.id ?? null,
       error: {
         code: -32603,
-        message: error.message,
+        message: 'Internal JSON-RPC error',
         ...(error.requestId ? { data: { requestId: error.requestId } } : {}),
       },
     }));
+    console.error('[seerxo] JSON-RPC error:', error);
   }
 }
 

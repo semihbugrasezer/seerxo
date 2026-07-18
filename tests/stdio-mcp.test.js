@@ -167,7 +167,7 @@ describe('stdio MCP process', () => {
       method: 'tools/call',
       params: { name: 'generate_etsy_seo', arguments: { product_name: 42 } },
     });
-    assert.match(invalid.error.message, /product_name must be a non-empty string/);
+    assert.equal(invalid.error.message, 'Internal JSON-RPC error');
 
     child.stdin.end();
     await new Promise((resolve, reject) => {
@@ -176,6 +176,7 @@ describe('stdio MCP process', () => {
     });
 
     assert.ok(stderr.includes('Seerxo MCP Server started'));
+    assert.ok(stderr.includes('product_name must be a non-empty string'));
     for (const line of stdoutLines) {
       assert.doesNotThrow(() => JSON.parse(line));
     }
