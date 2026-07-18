@@ -1,3 +1,10 @@
+## [1.12.1](https://github.com/semihbugrasezer/seerxo/compare/v1.12.0...v1.12.1) (2026-07-18)
+
+
+### Bug Fixes
+
+* avoid backtracking in API key error detection ([ec11e42](https://github.com/semihbugrasezer/seerxo/commit/ec11e42b5a550b307cb1da251889eb2977078692))
+
 # [1.12.0](https://github.com/semihbugrasezer/seerxo/compare/v1.11.0...v1.12.0) (2026-07-18)
 
 
