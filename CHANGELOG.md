@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/semihbugrasezer/seerxo/compare/v1.10.2...v1.11.0) (2026-07-18)
+
+
+### Features
+
+* **claude:** add Claude Code plugin ([505f2ac](https://github.com/semihbugrasezer/seerxo/commit/505f2ac729d8739d1c7dc62a85a02ce0eee873f3))
+
 ## [1.10.2](https://github.com/semihbugrasezer/seerxo/compare/v1.10.1...v1.10.2) (2026-07-18)
 
 
