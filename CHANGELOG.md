@@ -1,3 +1,10 @@
+## [1.12.3](https://github.com/semihbugrasezer/seerxo/compare/v1.12.2...v1.12.3) (2026-07-18)
+
+
+### Bug Fixes
+
+* remove browser command fallback ([5bf4440](https://github.com/semihbugrasezer/seerxo/commit/5bf44404867f1943443b4db6a624f28eb94e0d19))
+
 ## [1.12.2](https://github.com/semihbugrasezer/seerxo/compare/v1.12.1...v1.12.2) (2026-07-18)
 
 
