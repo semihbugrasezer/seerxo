@@ -100,6 +100,11 @@ same entitlement. Re-check current availability before giving plan-specific guid
 - [x] Read-only, destructive, idempotent, and open-world annotations.
 - [x] OAuth discovery, DCR, PKCE S256, refresh tokens, resource audience, and scopes.
 - [x] Rate limits, successful-action credit charging, retry idempotency, and audit logs.
+- [x] Publish the Smithery skill at `seerxo/etsy-seo` with the branded skill assets.
+- [x] Publish and scan the Smithery server against `https://api.seerxo.com/mcp`.
+- [x] Add the Smithery backlink and npm weekly-download badges to the repository README.
+- [ ] Upload `assets/avatar.png` as the GitHub `seerxo` organization avatar; Smithery's
+  skill header reads `https://github.com/seerxo.png` rather than the skill icon metadata.
 - [ ] Confirm privacy policy, support page, test account, and directory screenshots.
 - [ ] Submit to the Claude Connectors Directory.
 - [ ] Submit the ChatGPT app after workspace testing and approval.
