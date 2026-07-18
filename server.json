@@ -1,19 +1,26 @@
 {
-  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.semihbugrasezer/seerxo",
+  "title": "Seerxo",
   "description": "Generate SEO-optimized Etsy listings \u2014 title, description, and 13 tags \u2014 from your AI assistant.",
   "repository": {
     "url": "https://github.com/semihbugrasezer/seerxo",
     "source": "github"
   },
   "websiteUrl": "https://www.seerxo.com",
-  "version": "1.9.0",
+  "version": "1.10.0",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://api.seerxo.com/mcp"
+    }
+  ],
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "seerxo",
-      "version": "1.9.0",
+      "version": "1.10.0",
       "transport": {
         "type": "stdio"
       },

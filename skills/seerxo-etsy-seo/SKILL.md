@@ -3,7 +3,7 @@ name: seerxo-etsy-seo
 description: Generate, audit, optimize, and research keywords for Etsy listings through the Seerxo remote MCP server or CLI. Use when a user wants an Etsy title, description, 13 tags, SEO score, listing rewrite, keyword ideas, quota help, or help connecting and testing Seerxo with Claude or ChatGPT.
 ---
 
-<img src="https://www.seerxo.com/favicon.svg" alt="Seerxo" width="72" height="72" />
+![Seerxo Etsy SEO](https://raw.githubusercontent.com/semihbugrasezer/seerxo/main/skills/seerxo-etsy-seo/assets/seerxo-banner.svg)
 
 # Seerxo Etsy SEO
 
@@ -118,16 +118,18 @@ never claim an absolute search-volume number.
 ## Handle authentication and quota
 
 - Remote discovery and `seerxo_analyze_listing` work without authentication.
-- Generation, optimization, keyword research, and quota require a Seerxo API key.
-  Send it as a Bearer credential or store it in the connector's secret configuration.
-- Never print, log, or place an API key directly in a user-visible URL.
+- Generation, optimization, keyword research, and quota require Seerxo authentication.
+  Prefer the connector's OAuth flow; use an API key Bearer credential only for CLI,
+  Inspector, or clients that explicitly support static secrets.
+- Never print, log, or place an API key in a query parameter or user-visible URL.
 - Use the product term **AI actions**: Free includes 5 per month and Premium includes up
   to 300 per month; audits remain free on both plans.
 
 ## Fix common errors
 
 - `command not found: seerxo` → run `npm install -g seerxo`.
-- Missing or invalid API key → run `seerxo login`, then retry; inspect with `seerxo status`.
+- OAuth sign-in failed → reconnect the connector and approve the requested scopes.
+- Missing or invalid CLI API key → run `seerxo login`, then retry; inspect with `seerxo status`.
 - Monthly or daily limit reached → do not retry the paid action; show the returned usage
   and point to `https://www.seerxo.com/pricing`.
 - MCP connection failure → run the Inspector checks in

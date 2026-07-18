@@ -5,6 +5,7 @@
 <br/><br/>
 
 [![npm](https://img.shields.io/npm/v/seerxo?color=a78bfa&label=npm)](https://www.npmjs.com/package/seerxo)
+[![npm downloads](https://img.shields.io/npm/dw/seerxo?logo=npm)](https://www.npmjs.com/package/seerxo)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-blue)](https://modelcontextprotocol.io)
 [![smithery badge](https://smithery.ai/badge/seerxo)](https://smithery.ai/servers/seerxo)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
