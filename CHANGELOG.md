@@ -1,3 +1,10 @@
+## [1.9.1](https://github.com/semihbugrasezer/seerxo/compare/v1.9.0...v1.9.1) (2026-07-18)
+
+
+### Bug Fixes
+
+* **mcp:** add Smithery quality metadata ([78a8021](https://github.com/semihbugrasezer/seerxo/commit/78a8021e0ca76009f034f10b12e80dad4dd75591))
+
 # [1.9.0](https://github.com/semihbugrasezer/seerxo/compare/v1.8.1...v1.9.0) (2026-07-17)
 
 
