@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "seerxo": {
+      "type": "http",
+      "url": "https://api.seerxo.com/mcp"
+    }
+  }
+}

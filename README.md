@@ -116,6 +116,15 @@ Add `--json` to any command for machine-readable output.
 <summary><b>🧑‍💻 Claude Code skill setup</b></summary>
 <br/>
 
+The repository is also a Claude Code plugin. To test it directly from a clone:
+
+```bash
+claude plugin validate .
+claude --plugin-dir .
+```
+
+Or install the same skill through the Seerxo CLI:
+
 ```bash
 npm install -g seerxo && seerxo login
 seerxo skill add            # user-level, all projects

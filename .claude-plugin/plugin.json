@@ -1,0 +1,12 @@
+{
+  "name": "seerxo",
+  "description": "Generate, audit, optimize, and research Etsy listings with Seerxo in Claude Code.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Seerxo"
+  },
+  "homepage": "https://www.seerxo.com",
+  "repository": "https://github.com/semihbugrasezer/seerxo",
+  "license": "MIT",
+  "keywords": ["etsy", "seo", "mcp", "e-commerce"]
+}
