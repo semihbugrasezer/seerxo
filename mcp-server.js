@@ -1090,6 +1090,81 @@ export async function startInteractiveShell() {
   await promptLoop();
 }
 
+async function runGenerateCommand(subArgs) {
+  if (isInteractiveSession) printCliBanner();
+
+  const productName = getFlagValue('product', subArgs);
+  if (!productName) {
+    console.error('Missing argument: --product "Product name"');
+    process.exitCode = 1;
+    return;
+  }
+
+  try {
+    const result = await generateEtsySEO(
+      productName,
+      getFlagValue('category', subArgs) || ''
+    );
+    if (subArgs.includes('--json')) {
+      console.log(JSON.stringify(result, null, 2));
+    } else {
+      printSeoResult(productName, result);
+    }
+  } catch (error) {
+    console.error(error.message || 'Content generation failed');
+    process.exitCode = 1;
+  }
+}
+
+async function runListingCommand(sub, subArgs) {
+  const flag = (name) => getFlagValue(name, subArgs) || undefined;
+  const rawTags = flag('tags');
+  const payload = buildListingPayload({
+    seed: flag('seed'),
+    product_name: flag('product'),
+    title: flag('title'),
+    description: flag('description'),
+    tags: rawTags ? rawTags.split(',').map((tag) => tag.trim()).filter(Boolean) : undefined,
+    url: flag('url'),
+  });
+
+  if (Object.keys(payload).length === 0) {
+    console.error(
+      sub === 'keywords'
+        ? 'Missing input: pass --seed "ceramic mug" (or --product / --title).'
+        : 'Missing input: pass at least one of --title / --tags / --description (tags are comma-separated).'
+    );
+    process.exitCode = 1;
+    return;
+  }
+
+  if (sub === 'optimize' && flag('mode')) payload.mode = flag('mode');
+
+  try {
+    const data = await callSeerxoV1(
+      sub === 'keywords' ? '/v1/keywords' : `/v1/${sub}`,
+      payload
+    );
+    if (subArgs.includes('--json')) {
+      console.log(JSON.stringify(data, null, 2));
+      return;
+    }
+
+    const text =
+      sub === 'analyze'
+        ? formatAnalyzeResult(data)
+        : sub === 'optimize'
+          ? formatOptimizeResult(data)
+          : formatKeywordsResult(data);
+    console.log(
+      boxen(text, { padding: 1, borderColor: 'cyan', borderStyle: 'round', title: 'seerxo' })
+    );
+  } catch (error) {
+    console.error(error.message || `${sub} failed`);
+    process.exitCode = 1;
+  }
+}
+
 export async function handleCli(subArgs) {
   const sub = normalizeCommandName(subArgs[0]);
 
@@ -1136,84 +1211,12 @@ export async function handleCli(subArgs) {
   }
 
   if (sub === 'generate') {
-    if (isInteractiveSession) {
-      printCliBanner();
-    }
-    const productIndex = subArgs.indexOf('--product');
-    const categoryIndex = subArgs.indexOf('--category');
-    const jsonOutput = subArgs.includes('--json');
-
-    if (productIndex === -1 || !subArgs[productIndex + 1]) {
-      console.error('Missing argument: --product "Product name"');
-      process.exitCode = 1;
-      return;
-    }
-    const productName = subArgs[productIndex + 1];
-    const category =
-      categoryIndex !== -1 && subArgs[categoryIndex + 1]
-        ? subArgs[categoryIndex + 1]
-        : '';
-
-    try {
-      const result = await generateEtsySEO(productName, category);
-      if (jsonOutput) {
-        console.log(JSON.stringify(result, null, 2));
-      } else {
-        printSeoResult(productName, result);
-      }
-    } catch (error) {
-      console.error(error.message || 'Content generation failed');
-      process.exitCode = 1;
-      return;
-    }
+    await runGenerateCommand(subArgs);
     return;
   }
 
   if (sub === 'analyze' || sub === 'optimize' || sub === 'keywords') {
-    const jsonOutput = subArgs.includes('--json');
-    const flag = (name) => {
-      const index = subArgs.indexOf(`--${name}`);
-      return index !== -1 && subArgs[index + 1] ? subArgs[index + 1] : undefined;
-    };
-    const rawTags = flag('tags');
-    const payload = buildListingPayload({
-      seed: flag('seed'),
-      product_name: flag('product'),
-      title: flag('title'),
-      description: flag('description'),
-      tags: rawTags ? rawTags.split(',').map((tag) => tag.trim()).filter(Boolean) : undefined,
-      url: flag('url'),
-    });
-    if (Object.keys(payload).length === 0) {
-      console.error(
-        sub === 'keywords'
-          ? 'Missing input: pass --seed "ceramic mug" (or --product / --title).'
-          : `Missing input: pass at least one of --title / --tags / --description (tags are comma-separated).`
-      );
-      process.exitCode = 1;
-      return;
-    }
-    if (sub === 'optimize' && flag('mode')) payload.mode = flag('mode');
-    try {
-      const data = await callSeerxoV1(sub === 'keywords' ? '/v1/keywords' : `/v1/${sub}`, payload);
-      if (jsonOutput) {
-        console.log(JSON.stringify(data, null, 2));
-      } else {
-        const text =
-          sub === 'analyze'
-            ? formatAnalyzeResult(data)
-            : sub === 'optimize'
-              ? formatOptimizeResult(data)
-              : formatKeywordsResult(data);
-        console.log(
-          boxen(text, { padding: 1, borderColor: 'cyan', borderStyle: 'round', title: 'seerxo' })
-        );
-      }
-    } catch (error) {
-      console.error(error.message || `${sub} failed`);
-      process.exitCode = 1;
-      return;
-    }
+    await runListingCommand(sub, subArgs);
     return;
   }
 
