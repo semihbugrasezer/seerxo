@@ -1,3 +1,10 @@
+## [1.12.2](https://github.com/semihbugrasezer/seerxo/compare/v1.12.1...v1.12.2) (2026-07-18)
+
+
+### Performance Improvements
+
+* avoid duplicate ANSI width calculation ([8c83814](https://github.com/semihbugrasezer/seerxo/commit/8c8381482ed9a38cd5cbdded30ffdf874daf5955))
+
 ## [1.12.1](https://github.com/semihbugrasezer/seerxo/compare/v1.12.0...v1.12.1) (2026-07-18)
 
 
