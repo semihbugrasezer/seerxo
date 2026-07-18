@@ -855,9 +855,100 @@ const LISTING_INPUT_PROPERTIES = {
   },
 };
 
+const STRING_ARRAY_SCHEMA = {
+  type: 'array',
+  items: { type: 'string' },
+};
+
+const SUB_SCORES_SCHEMA = {
+  type: 'object',
+  description: 'SEO scores from 0 to 100 for each listing area.',
+  properties: {
+    title: { type: 'number', description: 'Title SEO score from 0 to 100.' },
+    tags: { type: 'number', description: 'Tags SEO score from 0 to 100.' },
+    description: { type: 'number', description: 'Description SEO score from 0 to 100.' },
+    completeness: { type: 'number', description: 'Listing completeness score from 0 to 100.' },
+  },
+  required: ['title', 'tags', 'description', 'completeness'],
+};
+
+const WEAK_POINT_SCHEMA = {
+  type: 'object',
+  properties: {
+    id: { type: 'string', description: 'Stable identifier for the failed SEO check.' },
+    field: { type: 'string', description: 'Listing field that needs improvement.' },
+    severity: { type: 'string', enum: ['high', 'medium', 'low'], description: 'Priority of the finding.' },
+    reason: { type: 'string', description: 'Human-readable explanation of the finding.' },
+    fix: { type: 'string', description: 'Concrete action that resolves the finding.' },
+  },
+  required: ['id', 'field', 'severity', 'reason', 'fix'],
+};
+
+const AUDIT_OUTPUT_SCHEMA = {
+  type: 'object',
+  properties: {
+    seoScore: { type: 'number', description: 'Overall Etsy SEO score from 0 to 100.' },
+    subScores: SUB_SCORES_SCHEMA,
+    weakPoints: { type: 'array', items: WEAK_POINT_SCHEMA, description: 'Ranked SEO findings and fixes.' },
+    missingKeywords: { ...STRING_ARRAY_SCHEMA, description: 'Product keywords missing from the listing.' },
+    tagUtilization: {
+      type: 'object',
+      description: 'How effectively the 13 Etsy tag slots are used.',
+      properties: {
+        used: { type: 'number', description: 'Number of tag slots currently used.' },
+        max: { type: 'number', description: 'Maximum Etsy tag slots available.' },
+        duplicates: { ...STRING_ARRAY_SCHEMA, description: 'Duplicate tags.' },
+        tooBroad: { ...STRING_ARRAY_SCHEMA, description: 'Single-word tags that are too broad.' },
+        overLong: { ...STRING_ARRAY_SCHEMA, description: 'Tags longer than Etsy allows.' },
+      },
+      required: ['used', 'max', 'duplicates', 'tooBroad', 'overLong'],
+    },
+  },
+  required: ['seoScore', 'subScores', 'weakPoints', 'missingKeywords', 'tagUtilization'],
+};
+
+const LISTING_OUTPUT_SCHEMA = {
+  type: 'object',
+  properties: {
+    title: { type: 'string', description: 'SEO-optimized Etsy listing title.' },
+    description: { type: 'string', description: 'SEO-optimized Etsy listing description.' },
+    tags: { ...STRING_ARRAY_SCHEMA, description: 'SEO-optimized Etsy tags.' },
+  },
+  required: ['title', 'description', 'tags'],
+};
+
+const GENERATE_TOOL = {
+  name: 'generate_etsy_seo',
+  title: 'Generate Etsy SEO Listing',
+  description: 'Generate a complete SEO-optimized Etsy listing with a title, description, and 13 tags from a product name and optional category.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      product_name: {
+        type: 'string',
+        description: 'Name of the product to optimize.',
+      },
+      category: {
+        type: 'string',
+        description: 'Optional Etsy category (for example, "Home & Living").',
+      },
+    },
+    required: ['product_name'],
+  },
+  outputSchema: LISTING_OUTPUT_SCHEMA,
+  annotations: {
+    title: 'Generate Etsy SEO Listing',
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
+};
+
 export const LISTING_TOOLS = [
   {
     name: 'seerxo_suggest_keywords',
+    title: 'Suggest Etsy Keywords',
     description:
       'Get ranked Etsy keyword suggestions for a product or seed phrase, sampled from Etsy\'s own search autocomplete (relative demand rank, never fabricated volumes). Each keyword comes with a placement recommendation (title / tags / description) and whether the listing already uses it. Pass the listing fields too when you have them for better placement advice.',
     inputSchema: {
@@ -868,15 +959,55 @@ export const LISTING_TOOLS = [
       },
       required: [],
     },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        seed: { type: 'string', description: 'Normalized seed phrase used for suggestions.' },
+        confidence: { type: 'string', enum: ['medium', 'low'], description: 'Confidence in the available suggestions.' },
+        keywords: {
+          type: 'array',
+          description: 'Keyword suggestions in Etsy autosuggest demand order.',
+          items: {
+            type: 'object',
+            properties: {
+              keyword: { type: 'string', description: 'Suggested keyword phrase.' },
+              demandRank: { type: 'number', description: 'Relative rank from Etsy autosuggest.' },
+              placement: { type: 'string', enum: ['title', 'tags', 'description'], description: 'Recommended listing placement.' },
+              inListing: { type: 'boolean', description: 'Whether the listing already contains the keyword.' },
+            },
+            required: ['keyword', 'demandRank', 'placement', 'inListing'],
+          },
+        },
+        source: { type: 'string', description: 'Source used for keyword suggestions.' },
+      },
+      required: ['seed', 'confidence', 'keywords', 'source'],
+    },
+    annotations: {
+      title: 'Suggest Etsy Keywords',
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true,
+    },
   },
   {
     name: 'seerxo_analyze_listing',
+    title: 'Analyze Etsy Listing',
     description:
       'Audit an existing Etsy listing. Returns an SEO score (0-100) with per-field sub-scores, ranked weak points (each with severity and a concrete fix), missing keywords, and tag-slot utilization. Call it with whatever listing fields are available (title, tags, description); at least one is required.',
     inputSchema: { type: 'object', properties: LISTING_INPUT_PROPERTIES, required: [] },
+    outputSchema: AUDIT_OUTPUT_SCHEMA,
+    annotations: {
+      title: 'Analyze Etsy Listing',
+      readOnlyHint: true,
+      destructiveHint: false,
+      idempotentHint: true,
+      openWorldHint: true,
+    },
   },
   {
     name: 'seerxo_optimize_listing',
+    title: 'Optimize Etsy Listing',
     description:
       'Rewrite an Etsy listing to fix its audit findings: improved title, description, and tag set, each mapped to the finding it resolves, with a before/after SEO score. Etsy limits (140-char title, 13 tags, 20 chars per tag) are enforced server-side and the result never scores below the original. Provide the current listing fields.',
     inputSchema: {
@@ -891,8 +1022,49 @@ export const LISTING_TOOLS = [
       },
       required: [],
     },
+    outputSchema: {
+      type: 'object',
+      properties: {
+        before: {
+          type: 'object',
+          description: 'Audit summary before optimization.',
+          properties: {
+            seoScore: { type: 'number', description: 'Original SEO score from 0 to 100.' },
+            subScores: SUB_SCORES_SCHEMA,
+            weakPoints: { type: 'array', items: WEAK_POINT_SCHEMA, description: 'Original SEO findings.' },
+          },
+          required: ['seoScore', 'subScores', 'weakPoints'],
+        },
+        optimized: LISTING_OUTPUT_SCHEMA,
+        after: {
+          type: 'object',
+          description: 'Audit summary after optimization.',
+          properties: {
+            seoScore: { type: 'number', description: 'Optimized SEO score from 0 to 100.' },
+            subScores: SUB_SCORES_SCHEMA,
+            weakPoints: { type: 'array', items: WEAK_POINT_SCHEMA, description: 'SEO findings that remain.' },
+          },
+          required: ['seoScore', 'subScores', 'weakPoints'],
+        },
+        resolved: { ...STRING_ARRAY_SCHEMA, description: 'Finding IDs resolved by the rewrite.' },
+        unresolved: { ...STRING_ARRAY_SCHEMA, description: 'Finding IDs still present after the rewrite.' },
+        diff: { type: 'object', description: 'Before and after values for each listing field.' },
+        fallback: { type: 'boolean', description: 'Whether the original listing was kept to prevent a score regression.' },
+        mode: { type: 'string', enum: ['full', 'title_only', 'description_only', 'tags_only'], description: 'Optimization mode that was applied.' },
+      },
+      required: ['before', 'optimized', 'after', 'resolved', 'unresolved', 'diff', 'fallback', 'mode'],
+    },
+    annotations: {
+      title: 'Optimize Etsy Listing',
+      readOnlyHint: false,
+      destructiveHint: false,
+      idempotentHint: false,
+      openWorldHint: true,
+    },
   },
 ];
+
+export const MCP_TOOLS = [GENERATE_TOOL, ...LISTING_TOOLS];
 
 export function formatAnalyzeResult(data) {
   const s = data.subScores || {};
@@ -1356,7 +1528,16 @@ export function startMcpServer() {
               },
               serverInfo: {
                 name: 'seerxo',
+                title: 'Seerxo — Etsy SEO Assistant',
                 version: clientVersion,
+                description: 'Generate, analyze, and optimize Etsy listings with SEO-focused titles, descriptions, tags, and keyword suggestions.',
+                websiteUrl: 'https://www.seerxo.com',
+                icons: [
+                  {
+                    src: 'https://www.seerxo.com/favicon.svg',
+                    mimeType: 'image/svg+xml',
+                  },
+                ],
               },
             },
           };
@@ -1367,27 +1548,7 @@ export function startMcpServer() {
             jsonrpc: '2.0',
             id: request.id,
             result: {
-              tools: [
-                {
-                  name: 'generate_etsy_seo',
-                  description: 'Generate SEO-optimized Etsy product listings.',
-                  inputSchema: {
-                    type: 'object',
-                    properties: {
-                      product_name: {
-                        type: 'string',
-                        description: 'Name of the product to optimize.',
-                      },
-                      category: {
-                        type: 'string',
-                        description: 'Optional category (e.g., "Home & Living")',
-                      },
-                    },
-                    required: ['product_name'],
-                  },
-                },
-                ...LISTING_TOOLS,
-              ],
+              tools: MCP_TOOLS,
             },
           };
 
@@ -1420,6 +1581,12 @@ export function startMcpServer() {
                     )}${usageInfo}`,
                   },
                 ],
+                structuredContent: {
+                  title: result.title,
+                  description: result.description,
+                  tags: result.tags,
+                  ...(result.usage ? { usage: result.usage } : {}),
+                },
               },
             };
 
@@ -1429,7 +1596,10 @@ export function startMcpServer() {
             console.log(JSON.stringify({
               jsonrpc: '2.0',
               id: request.id,
-              result: { content: [{ type: 'text', text: formatKeywordsResult(data) }] },
+              result: {
+                content: [{ type: 'text', text: formatKeywordsResult(data) }],
+                structuredContent: data,
+              },
             }));
           } else if (name === 'seerxo_analyze_listing' || name === 'seerxo_optimize_listing') {
             const isAnalyze = name === 'seerxo_analyze_listing';
@@ -1447,6 +1617,7 @@ export function startMcpServer() {
                     text: isAnalyze ? formatAnalyzeResult(data) : formatOptimizeResult(data),
                   },
                 ],
+                structuredContent: data,
               },
             };
 
@@ -1490,4 +1661,3 @@ export function startMcpServer() {
 
   console.error('Seerxo MCP Server started');
 }
-

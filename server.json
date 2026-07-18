@@ -7,17 +7,23 @@
     "source": "github"
   },
   "websiteUrl": "https://www.seerxo.com",
-  "version": "1.8.1",
+  "version": "1.9.0",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "seerxo",
-      "version": "1.8.1",
+      "version": "1.9.0",
       "transport": {
         "type": "stdio"
       },
       "environmentVariables": [
+        {
+          "name": "SEERXO_EMAIL",
+          "description": "Optional Seerxo account email; omit when credentials were saved with 'seerxo login'.",
+          "isRequired": false,
+          "isSecret": false
+        },
         {
           "name": "SEERXO_API_KEY",
           "description": "Optional API key from seerxo.com \u2014 omit to use the free tier set up via 'seerxo configure'.",

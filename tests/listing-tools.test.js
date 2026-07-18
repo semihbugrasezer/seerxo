@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import {
+  MCP_TOOLS,
   LISTING_TOOLS,
   buildListingPayload,
   formatAnalyzeResult,
@@ -10,6 +11,23 @@ import {
 } from '../mcp-server.js';
 
 describe('listing tool definitions', () => {
+  it('publishes output schemas and safety annotations for every MCP tool', () => {
+    assert.deepStrictEqual(MCP_TOOLS.map((t) => t.name), [
+      'generate_etsy_seo',
+      'seerxo_suggest_keywords',
+      'seerxo_analyze_listing',
+      'seerxo_optimize_listing',
+    ]);
+    for (const tool of MCP_TOOLS) {
+      assert.strictEqual(tool.outputSchema.type, 'object', `${tool.name} output schema`);
+      assert.ok(tool.outputSchema.required.length > 0, `${tool.name} required output fields`);
+      assert.strictEqual(typeof tool.annotations.title, 'string', `${tool.name} annotation title`);
+      for (const hint of ['readOnlyHint', 'destructiveHint', 'idempotentHint', 'openWorldHint']) {
+        assert.strictEqual(typeof tool.annotations[hint], 'boolean', `${tool.name} ${hint}`);
+      }
+    }
+  });
+
   it('exposes the listing tools with agent-usable schemas', () => {
     const names = LISTING_TOOLS.map((t) => t.name);
     assert.deepStrictEqual(names, ['seerxo_suggest_keywords', 'seerxo_analyze_listing', 'seerxo_optimize_listing']);
