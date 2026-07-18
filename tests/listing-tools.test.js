@@ -82,7 +82,10 @@ describe('buildListingPayload', () => {
   });
 
   it('omits missing fields instead of sending empties', () => {
-    assert.deepStrictEqual(buildListingPayload({ title: 'T', tags: 'not-array' }), { title: 'T' });
+    assert.throws(() => {
+      buildListingPayload({ title: 'T', tags: 'not-array' });
+    }, /tags must be an array of strings/);
+    assert.deepStrictEqual(buildListingPayload({ title: 'T' }), { title: 'T' });
   });
 });
 
