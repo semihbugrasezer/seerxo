@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/semihbugrasezer/seerxo/compare/v1.10.0...v1.10.1) (2026-07-18)
+
+
+### Bug Fixes
+
+* **skill:** constrain logo size on Smithery ([1270fb0](https://github.com/semihbugrasezer/seerxo/commit/1270fb013b73f9e5cf9d8dd439d1d19df41c6588))
+
 # [1.10.0](https://github.com/semihbugrasezer/seerxo/compare/v1.9.1...v1.10.0) (2026-07-18)
 
 
