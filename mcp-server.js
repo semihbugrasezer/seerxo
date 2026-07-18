@@ -7,7 +7,7 @@ import path from 'node:path';
 import readline from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import { createRequire } from 'node:module';
-import { execFileSync, spawn } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import chalk from 'chalk';
 import open from 'open';
 import { DEFAULT_HOST, normalizeHost } from './utils.js';
@@ -44,15 +44,11 @@ function boxen(content, options = {}) {
 function openUrlInBrowser(url) {
   if (process.env.SEERXO_DISABLE_BROWSER === '1') return;
   try {
-    open(url).catch(() => {
-      // Fallback: try platform-specific commands
-      const cmd = process.platform === 'darwin' ? 'open'
-        : process.platform === 'win32' ? 'start'
-        : 'xdg-open';
-      spawn(cmd, [url], { detached: true, stdio: 'ignore' }).unref();
+    open(url).catch((error) => {
+      console.error(chalk.yellow(`Failed to open browser automatically: ${error.message}`));
     });
-  } catch {
-    // Silent fail — URL is already printed to console
+  } catch (error) {
+    console.error(chalk.yellow(`Failed to invoke browser opener: ${error.message}`));
   }
 }
 
