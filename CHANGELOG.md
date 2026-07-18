@@ -1,3 +1,10 @@
+## [1.12.4](https://github.com/semihbugrasezer/seerxo/compare/v1.12.3...v1.12.4) (2026-07-18)
+
+
+### Bug Fixes
+
+* validate MCP tool inputs ([b529cd9](https://github.com/semihbugrasezer/seerxo/commit/b529cd9c297eb34dbb9f61abd08b9d4e3e2015da))
+
 ## [1.12.3](https://github.com/semihbugrasezer/seerxo/compare/v1.12.2...v1.12.3) (2026-07-18)
 
 
