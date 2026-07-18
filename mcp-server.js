@@ -880,13 +880,33 @@ async function callSeerxoV1(pathname, payload) {
 
 // Map MCP tool arguments onto the /v1 audit request body.
 export function buildListingPayload(toolArgs = {}) {
+  if (!toolArgs || typeof toolArgs !== 'object' || Array.isArray(toolArgs)) {
+    throw new Error('Invalid arguments: must be an object');
+  }
+
   const payload = {};
-  if (toolArgs.seed) payload.seed = toolArgs.seed;
-  if (toolArgs.product_name) payload.productName = toolArgs.product_name;
-  if (toolArgs.title) payload.title = toolArgs.title;
-  if (toolArgs.description) payload.description = toolArgs.description;
-  if (Array.isArray(toolArgs.tags)) payload.tags = toolArgs.tags;
-  if (toolArgs.url) payload.url = toolArgs.url;
+  for (const [source, target] of [
+    ['seed', 'seed'],
+    ['product_name', 'productName'],
+    ['title', 'title'],
+    ['description', 'description'],
+    ['url', 'url'],
+  ]) {
+    const value = toolArgs[source];
+    if (value == null) continue;
+    if (typeof value !== 'string') {
+      throw new Error(`Invalid argument: ${source} must be a string`);
+    }
+    if (value) payload[target] = value;
+  }
+
+  if (toolArgs.tags != null) {
+    if (!Array.isArray(toolArgs.tags) || !toolArgs.tags.every((tag) => typeof tag === 'string')) {
+      throw new Error('Invalid argument: tags must be an array of strings');
+    }
+    if (toolArgs.tags.length) payload.tags = toolArgs.tags;
+  }
+
   return payload;
 }
 
@@ -1238,9 +1258,28 @@ export async function handleCli(subArgs) {
 }
 
 async function handleMcpToolCall(request) {
-  const { name, arguments: toolArgs } = request.params;
+  const params = request.params;
+  if (!params || typeof params !== 'object' || Array.isArray(params)) {
+    throw new Error('Invalid tool parameters: must be an object');
+  }
+
+  const { name } = params;
+  const toolArgs = params.arguments === undefined ? {} : params.arguments;
+  if (typeof name !== 'string' || !name) {
+    throw new Error('Invalid or missing tool name');
+  }
+  if (!toolArgs || typeof toolArgs !== 'object' || Array.isArray(toolArgs)) {
+    throw new Error('Invalid tool arguments: must be an object');
+  }
 
   if (name === 'generate_etsy_seo') {
+    if (typeof toolArgs.product_name !== 'string' || !toolArgs.product_name.trim()) {
+      throw new Error('Invalid argument: product_name must be a non-empty string');
+    }
+    if (toolArgs.category != null && typeof toolArgs.category !== 'string') {
+      throw new Error('Invalid argument: category must be a string');
+    }
+
     const result = await generateEtsySEO(
       toolArgs.product_name,
       toolArgs.category || ''
@@ -1287,7 +1326,12 @@ async function handleMcpToolCall(request) {
   if (name === 'seerxo_analyze_listing' || name === 'seerxo_optimize_listing') {
     const isAnalyze = name === 'seerxo_analyze_listing';
     const payload = buildListingPayload(toolArgs);
-    if (!isAnalyze && toolArgs.mode) payload.mode = toolArgs.mode;
+    if (!isAnalyze && toolArgs.mode != null) {
+      if (!['full', 'title_only', 'description_only', 'tags_only'].includes(toolArgs.mode)) {
+        throw new Error('Invalid argument: mode is not supported');
+      }
+      payload.mode = toolArgs.mode;
+    }
     const data = await callSeerxoV1(
       isAnalyze ? '/v1/analyze' : '/v1/optimize',
       payload

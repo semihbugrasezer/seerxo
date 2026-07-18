@@ -161,6 +161,14 @@ describe('stdio MCP process', () => {
     });
     assert.equal(quota.result.structuredContent.remaining, 9);
 
+    const invalid = await request({
+      jsonrpc: '2.0',
+      id: 5,
+      method: 'tools/call',
+      params: { name: 'generate_etsy_seo', arguments: { product_name: 42 } },
+    });
+    assert.match(invalid.error.message, /product_name must be a non-empty string/);
+
     child.stdin.end();
     await new Promise((resolve, reject) => {
       child.once('exit', (code) => code === 0 ? resolve() : reject(new Error(`MCP process exited ${code}: ${stderr}`)));
