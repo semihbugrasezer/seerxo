@@ -1,3 +1,10 @@
+## [1.12.6](https://github.com/semihbugrasezer/seerxo/compare/v1.12.5...v1.12.6) (2026-07-19)
+
+
+### Bug Fixes
+
+* add request timeout to API calls ([#97](https://github.com/semihbugrasezer/seerxo/issues/97)) ([74f036a](https://github.com/semihbugrasezer/seerxo/commit/74f036aee79fddd015529fb51746846b386a007a))
+
 ## [1.12.5](https://github.com/semihbugrasezer/seerxo/compare/v1.12.4...v1.12.5) (2026-07-18)
 
 
