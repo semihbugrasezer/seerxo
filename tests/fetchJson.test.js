@@ -90,6 +90,34 @@ describe("fetchJson", () => {
     );
   });
 
+  it("should pass an abort signal to fetch", async () => {
+    let seenSignal = null;
+    global.fetch = async (url, options) => {
+      seenSignal = options.signal;
+      return { ok: true, json: async () => ({}) };
+    };
+
+    await fetchJson("https://example.com/api");
+    assert.ok(seenSignal instanceof AbortSignal);
+  });
+
+  it("should map timeout aborts to a friendly error with code 'timeout'", async () => {
+    global.fetch = async () => {
+      const err = new Error("The operation was aborted due to timeout");
+      err.name = "TimeoutError";
+      throw err;
+    };
+
+    await assert.rejects(
+      async () => await fetchJson("https://example.com/api"),
+      (err) => {
+        assert.match(err.message, /timed out after \d+s/);
+        assert.strictEqual(err.code, "timeout");
+        return true;
+      },
+    );
+  });
+
   it("should propagate fetch network errors", async () => {
     global.fetch = async () => {
       throw new Error("Network failure");
