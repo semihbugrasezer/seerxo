@@ -373,8 +373,37 @@ export const getFlagValue = (flag, list = []) => {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Generation calls proxy an LLM, so the default stays generous; override with
+// SEERXO_TIMEOUT_MS. No automatic retry: generate/optimize are metered POSTs
+// and a blind retry could double-spend credits.
+const FETCH_TIMEOUT_MS = (() => {
+  const parsed = parseInt(process.env.SEERXO_TIMEOUT_MS || '', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 120000;
+})();
+
+const isTimeoutError = (err) =>
+  err?.name === 'TimeoutError' ||
+  err?.name === 'AbortError' ||
+  err?.cause?.name === 'TimeoutError';
+
 export const fetchJson = async (url, options = {}) => {
-  const response = await fetch(url, options);
+  let response;
+  try {
+    response = await fetch(url, {
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      ...options,
+    });
+  } catch (err) {
+    if (isTimeoutError(err)) {
+      const error = new Error(
+        `Request timed out after ${Math.round(FETCH_TIMEOUT_MS / 1000)}s. ` +
+          `Check your connection, or raise SEERXO_TIMEOUT_MS if the server is just slow.`
+      );
+      error.code = 'timeout';
+      throw error;
+    }
+    throw err;
+  }
   let data = null;
   try {
     data = await response.json();
