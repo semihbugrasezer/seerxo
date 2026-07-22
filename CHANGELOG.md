@@ -1,3 +1,10 @@
+## [1.12.7](https://github.com/semihbugrasezer/seerxo/compare/v1.12.6...v1.12.7) (2026-07-22)
+
+
+### Bug Fixes
+
+* **deps:** bump js-yaml to 4.3.0 to resolve OSV vulnerability ([#102](https://github.com/semihbugrasezer/seerxo/issues/102)) ([4828d30](https://github.com/semihbugrasezer/seerxo/commit/4828d302305132ed96885940f862a26fa8c4ef03))
+
 ## [1.12.6](https://github.com/semihbugrasezer/seerxo/compare/v1.12.5...v1.12.6) (2026-07-19)
 
 
