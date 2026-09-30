@@ -71,13 +71,13 @@
     "semantic-release": "^25.0.3"
   },
   "overrides": {
-    "ip-address": "10.1.1",
-    "npm": "11.18.0",
+    "ip-address": "10.7.1",
+    "npm": "11.20.0",
     "@actions/http-client": {
-      "undici": "^6.28.0"
+      "undici": "^6.28.1"
     },
     "@semantic-release/github": {
-      "undici": "^7.29.0"
+      "undici": "^7.29.1"
     }
   },
   "mcpName": "io.github.semihbugrasezer/seerxo"
