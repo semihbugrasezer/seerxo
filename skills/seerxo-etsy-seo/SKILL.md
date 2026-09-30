@@ -1,6 +1,6 @@
 ---
 name: seerxo-etsy-seo
-description: Generate, audit, optimize, and research keywords for Etsy listings through the Seerxo remote MCP server or CLI. Use when a user wants an Etsy title, description, 13 tags, SEO score, listing rewrite, keyword ideas, quota help, or help connecting and testing Seerxo with Claude or ChatGPT.
+description: Generate, check readiness, apply guided fixes, and research keywords for Etsy listings through the Seerxo remote MCP server or CLI. Use when a user wants an Etsy title, description, 13 tags, Listing Readiness check, listing rewrite, keyword ideas, quota help, or help connecting and testing Seerxo with Claude or ChatGPT.
 ---
 
 ![Seerxo Etsy SEO](https://raw.githubusercontent.com/semihbugrasezer/seerxo/main/skills/seerxo-etsy-seo/assets/seerxo-banner.svg)
@@ -26,7 +26,7 @@ tool result without silently adding claims, materials, measurements, or keyword 
 | Intent | MCP tool | CLI fallback | Usage |
 | --- | --- | --- | --- |
 | Create a listing | `generate_etsy_seo` | `seerxo generate` | 1 AI action |
-| Score an existing listing | `seerxo_analyze_listing` | `seerxo analyze` | Free |
+| Check an existing listing | `seerxo_analyze_listing` | `seerxo analyze` | Free |
 | Rewrite weak fields | `seerxo_optimize_listing` | `seerxo optimize` | 1 AI action |
 | Find keyword ideas | `seerxo_suggest_keywords` | `seerxo keywords` | 1 AI action |
 | Check account usage | `seerxo_quota` | `seerxo status` | Free |
@@ -77,10 +77,13 @@ seerxo analyze --title "Speckled Ceramic Coffee Mug" --tags "handmade mug,cerami
 
 Present:
 
-- overall `seoScore` out of 100 and the title, tags, description, and completeness scores;
-- weak points in severity order as `reason → fix`;
+- canonical `overallScore` out of 100, `scoringVersion`, and the title, tags, description, and completeness readiness scores;
+- weak points in severity order as `reason → fix`, with each finding's source;
 - missing keywords without inventing search volume;
-- tag use as `used/13`, followed by duplicates, broad tags, and overlong tags.
+- tag use as `used/13`, followed by duplicates, broad tags, and overlong tags;
+- returned limitations, including that readiness does not predict rank, traffic, conversion, or sales.
+
+Treat `seoScore` only as a deprecated compatibility alias for `overallScore`.
 
 If no weak points are returned, say the listing passed the audit; do not manufacture work.
 

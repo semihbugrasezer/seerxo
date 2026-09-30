@@ -60,6 +60,14 @@ describe('listing tool definitions', () => {
       'tags_only',
     ]);
   });
+
+  it('publishes the versioned Listing Readiness contract', () => {
+    const analyzeTool = LISTING_TOOLS.find((t) => t.name === 'seerxo_analyze_listing');
+    assert.ok(analyzeTool.outputSchema.required.includes('overallScore'));
+    assert.ok(analyzeTool.outputSchema.required.includes('scoringVersion'));
+    assert.strictEqual(analyzeTool.outputSchema.properties.seoScore.deprecated, true);
+    assert.ok(analyzeTool.outputSchema.properties.weakPoints.items.required.includes('source'));
+  });
 });
 
 describe('buildListingPayload', () => {
@@ -152,10 +160,20 @@ describe('versioned API contract', () => {
 
 describe('formatters', () => {
   const audit = {
+    scoringVersion: 'etsy-guidance-2026-04-27',
+    scoreType: 'listing_readiness',
+    overallScore: 62,
     seoScore: 62,
+    evaluatedAt: '2026-08-30T12:00:00.000Z',
+    evidence: [],
+    limitations: ['This score does not predict search rank, traffic, conversion, or sales.'],
     subScores: { title: 80, tags: 40, description: 100, completeness: 66 },
     weakPoints: [
-      { id: 'tags_count', field: 'tags', severity: 'high', reason: 'Exactly 13 tags', fix: 'Use all 13 tag slots.' },
+      {
+        id: 'tags_count', ruleId: 'tags.use-all-slots', field: 'tags', severity: 'high',
+        reason: 'Exactly 13 tags', explanation: 'Etsy provides 13 tag slots.', fix: 'Use all 13 tag slots.',
+        source: { id: 'etsy-keywords', source: 'Etsy', title: 'Keywords 101', url: 'https://www.etsy.com/seller-handbook/article/382774281517' },
+      },
     ],
     missingKeywords: ['12oz'],
     tagUtilization: { used: 7, max: 13, duplicates: ['mug'], tooBroad: ['mug'], overLong: [] },
@@ -164,6 +182,13 @@ describe('formatters', () => {
   it('renders an audit as readable markdown with score, fixes, and tag slots', () => {
     const text = formatAnalyzeResult(audit);
     assert.ok(text.includes('62/100'));
+    assert.ok(text.includes('Listing Readiness'));
+    assert.ok(!text.includes('SEO Score'));
+    assert.ok(text.includes('etsy-guidance-2026-04-27'));
+    const sourceUrl = text.match(/\[source\]\((?<url>[^)]+)\)/)?.groups?.url;
+    assert.equal(sourceUrl, audit.weakPoints[0].source.url);
+    assert.equal(new URL(sourceUrl).hostname, 'www.etsy.com');
+    assert.ok(text.includes('does not predict search rank'));
     assert.ok(text.includes('[high] (tags) Exactly 13 tags — fix: Use all 13 tag slots.'));
     assert.ok(text.includes('12oz'));
     assert.ok(text.includes('7/13 used'));
@@ -172,14 +197,16 @@ describe('formatters', () => {
 
   it('renders an optimize result with before/after and the rewritten fields', () => {
     const text = formatOptimizeResult({
-      before: { seoScore: 40 },
-      after: { seoScore: 95 },
+      before: { overallScore: 40, seoScore: 39 },
+      after: { overallScore: 95, seoScore: 94 },
       optimized: { title: 'New Title', description: 'New description.', tags: ['a b', 'c d'] },
       resolved: ['tags_count', 'desc_present'],
       unresolved: ['tags_multiword'],
       fallback: false,
     });
     assert.ok(text.includes('40 → 95'));
+    assert.ok(text.includes('Listing Readiness'));
+    assert.ok(!text.includes('SEO Score'));
     assert.ok(text.includes('resolved 2 finding(s)'));
     assert.ok(text.includes('still open: tags_multiword'));
     assert.ok(text.includes('New Title'));

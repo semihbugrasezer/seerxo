@@ -24,34 +24,54 @@ const STRING_ARRAY_SCHEMA = {
 
 const SUB_SCORES_SCHEMA = {
   type: 'object',
-  description: 'SEO scores from 0 to 100 for each listing area.',
+  description: 'Listing Readiness scores from 0 to 100 for each supported listing area.',
   properties: {
-    title: { type: 'number', description: 'Title SEO score from 0 to 100.' },
-    tags: { type: 'number', description: 'Tags SEO score from 0 to 100.' },
-    description: { type: 'number', description: 'Description SEO score from 0 to 100.' },
+    title: { type: 'number', description: 'Title readiness from 0 to 100.' },
+    tags: { type: 'number', description: 'Tag readiness from 0 to 100.' },
+    description: { type: 'number', description: 'Description readiness from 0 to 100.' },
     completeness: { type: 'number', description: 'Listing completeness score from 0 to 100.' },
   },
   required: ['title', 'tags', 'description', 'completeness'],
 };
 
+const SOURCE_EVIDENCE_SCHEMA = {
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    source: { type: 'string' },
+    title: { type: 'string' },
+    url: { type: 'string', format: 'uri' },
+  },
+  required: ['id', 'source', 'title', 'url'],
+};
+
 const WEAK_POINT_SCHEMA = {
   type: 'object',
   properties: {
-    id: { type: 'string', description: 'Stable identifier for the failed SEO check.' },
+    id: { type: 'string', description: 'Stable identifier for the failed readiness check.' },
+    ruleId: { type: 'string', description: 'Versioned deterministic rule identifier.' },
     field: { type: 'string', description: 'Listing field that needs improvement.' },
     severity: { type: 'string', enum: ['high', 'medium', 'low'], description: 'Priority of the finding.' },
     reason: { type: 'string', description: 'Human-readable explanation of the finding.' },
+    explanation: { type: 'string', description: 'Why the deterministic check failed.' },
     fix: { type: 'string', description: 'Concrete action that resolves the finding.' },
+    source: SOURCE_EVIDENCE_SCHEMA,
   },
-  required: ['id', 'field', 'severity', 'reason', 'fix'],
+  required: ['id', 'ruleId', 'field', 'severity', 'reason', 'explanation', 'fix', 'source'],
 };
 
 const AUDIT_OUTPUT_SCHEMA = {
   type: 'object',
   properties: {
-    seoScore: { type: 'number', description: 'Overall Etsy SEO score from 0 to 100.' },
+    scoringVersion: { type: 'string', const: 'etsy-guidance-2026-04-27' },
+    scoreType: { type: 'string', const: 'listing_readiness' },
+    overallScore: { type: 'number', description: 'Deterministic Listing Readiness score from 0 to 100; not a rank or sales prediction.' },
+    evaluatedAt: { type: 'string', format: 'date-time' },
+    evidence: { type: 'array', items: SOURCE_EVIDENCE_SCHEMA },
+    limitations: { ...STRING_ARRAY_SCHEMA, description: 'What the submitted-field audit cannot measure or predict.' },
+    seoScore: { type: 'number', deprecated: true, description: 'Compatibility alias for overallScore.' },
     subScores: SUB_SCORES_SCHEMA,
-    weakPoints: { type: 'array', items: WEAK_POINT_SCHEMA, description: 'Ranked SEO findings and fixes.' },
+    weakPoints: { type: 'array', items: WEAK_POINT_SCHEMA, description: 'Ranked, sourced readiness findings and fixes.' },
     missingKeywords: { ...STRING_ARRAY_SCHEMA, description: 'Product keywords missing from the listing.' },
     tagUtilization: {
       type: 'object',
@@ -66,15 +86,15 @@ const AUDIT_OUTPUT_SCHEMA = {
       required: ['used', 'max', 'duplicates', 'tooBroad', 'overLong'],
     },
   },
-  required: ['seoScore', 'subScores', 'weakPoints', 'missingKeywords', 'tagUtilization'],
+  required: ['scoringVersion', 'scoreType', 'overallScore', 'evaluatedAt', 'evidence', 'limitations', 'seoScore', 'subScores', 'weakPoints', 'missingKeywords', 'tagUtilization'],
 };
 
 const LISTING_OUTPUT_SCHEMA = {
   type: 'object',
   properties: {
-    title: { type: 'string', description: 'SEO-optimized Etsy listing title.' },
-    description: { type: 'string', description: 'SEO-optimized Etsy listing description.' },
-    tags: { ...STRING_ARRAY_SCHEMA, description: 'SEO-optimized Etsy tags.' },
+    title: { type: 'string', description: 'Etsy listing title draft.' },
+    description: { type: 'string', description: 'Etsy listing description draft.' },
+    tags: { ...STRING_ARRAY_SCHEMA, description: 'Etsy listing tag drafts.' },
   },
   required: ['title', 'description', 'tags'],
 };
@@ -179,13 +199,13 @@ export const LISTING_TOOLS = [
   },
   {
     name: 'seerxo_analyze_listing',
-    title: 'Analyze Etsy Listing',
+    title: 'Check Etsy Listing Readiness',
     description:
-      'Audit an existing Etsy listing. Returns an SEO score (0-100) with per-field sub-scores, ranked weak points (each with severity and a concrete fix), missing keywords, and tag-slot utilization. Call it with whatever listing fields are available (title, tags, description); at least one is required.',
+      'Check an existing Etsy listing against a versioned deterministic readiness rubric. Returns sourced findings, per-field readiness scores, explicit limitations, missing product terms, and tag-slot utilization. It does not predict rank, traffic, conversion, or sales. Call it with whatever listing fields are available; at least one is required.',
     inputSchema: { type: 'object', properties: LISTING_INPUT_PROPERTIES, required: [] },
     outputSchema: AUDIT_OUTPUT_SCHEMA,
     annotations: {
-      title: 'Analyze Etsy Listing',
+      title: 'Check Etsy Listing Readiness',
       readOnlyHint: true,
       destructiveHint: false,
       idempotentHint: true,
@@ -194,9 +214,9 @@ export const LISTING_TOOLS = [
   },
   {
     name: 'seerxo_optimize_listing',
-    title: 'Optimize Etsy Listing',
+    title: 'Apply Guided Listing Fixes',
     description:
-      'Rewrite an Etsy listing to fix its audit findings: improved title, description, and tag set, each mapped to the finding it resolves, with a before/after SEO score. Etsy limits (140-char title, 13 tags, 20 chars per tag) are enforced server-side and the result never scores below the original. Provide the current listing fields.',
+      'Rewrite an Etsy listing to address sourced readiness findings, with complete before/after audits. Etsy limits (140-char title, 13 tags, 20 chars per tag) are enforced server-side and a rewrite that lowers the deterministic readiness score is rejected. Provide the current listing fields.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -212,27 +232,9 @@ export const LISTING_TOOLS = [
     outputSchema: {
       type: 'object',
       properties: {
-        before: {
-          type: 'object',
-          description: 'Audit summary before optimization.',
-          properties: {
-            seoScore: { type: 'number', description: 'Original SEO score from 0 to 100.' },
-            subScores: SUB_SCORES_SCHEMA,
-            weakPoints: { type: 'array', items: WEAK_POINT_SCHEMA, description: 'Original SEO findings.' },
-          },
-          required: ['seoScore', 'subScores', 'weakPoints'],
-        },
+        before: AUDIT_OUTPUT_SCHEMA,
         optimized: LISTING_OUTPUT_SCHEMA,
-        after: {
-          type: 'object',
-          description: 'Audit summary after optimization.',
-          properties: {
-            seoScore: { type: 'number', description: 'Optimized SEO score from 0 to 100.' },
-            subScores: SUB_SCORES_SCHEMA,
-            weakPoints: { type: 'array', items: WEAK_POINT_SCHEMA, description: 'SEO findings that remain.' },
-          },
-          required: ['seoScore', 'subScores', 'weakPoints'],
-        },
+        after: AUDIT_OUTPUT_SCHEMA,
         resolved: { ...STRING_ARRAY_SCHEMA, description: 'Finding IDs resolved by the rewrite.' },
         unresolved: { ...STRING_ARRAY_SCHEMA, description: 'Finding IDs still present after the rewrite.' },
         diff: { type: 'object', description: 'Before and after values for each listing field.' },
@@ -242,7 +244,7 @@ export const LISTING_TOOLS = [
       required: ['before', 'optimized', 'after', 'resolved', 'unresolved', 'diff', 'fallback', 'mode'],
     },
     annotations: {
-      title: 'Optimize Etsy Listing',
+      title: 'Apply Guided Listing Fixes',
       readOnlyHint: false,
       destructiveHint: false,
       idempotentHint: false,

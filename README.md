@@ -58,7 +58,7 @@ each tag ≤20 chars, lowercase, no duplicates.
 | 🖥️ **CLI** | Terminal lovers, scripts, batch work | `npm i -g seerxo` |
 | 🤖 **Claude Desktop (MCP)** | "Generate a listing" mid-conversation | [Setup ↓](#claude-desktop-mcp) |
 | 🧑‍💻 **Claude Code skill** | Listings without leaving your editor | `seerxo skill add` |
-| 🌐 **[Web app](https://www.seerxo.com)** | Zero install + free [SEO Score audit](https://www.seerxo.com/audit) | Open and type |
+| 🌐 **[Web app](https://www.seerxo.com)** | Zero install + free [Listing Readiness check](https://www.seerxo.com/audit) | Open and type |
 
 One account, one credit pool — every channel shares it.
 
@@ -73,7 +73,7 @@ seerxo generate --product "boho macrame wall hanging" --category "Home & Living"
 Already have a listing? Score it, fix it, and mine keywords from the same CLI:
 
 ```bash
-seerxo analyze  --title "Minimalist Mug" --tags "mug,gift" --description "..."   # SEO score + weak points
+seerxo analyze  --title "Minimalist Mug" --tags "mug,gift" --description "..."   # sourced readiness findings
 seerxo optimize --title "Minimalist Mug" --tags "mug,gift" --description "..."   # guided rewrite, before/after score
 seerxo keywords --seed "ceramic mug"                                             # ranked Etsy autosuggest keywords
 ```

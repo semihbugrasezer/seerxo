@@ -1,7 +1,7 @@
 export function formatAnalyzeResult(data) {
   const s = data.subScores || {};
   const weakPoints = (data.weakPoints || [])
-    .map((wp, i) => `${i + 1}. [${wp.severity}] (${wp.field}) ${wp.reason} — fix: ${wp.fix}`)
+    .map((wp, i) => `${i + 1}. [${wp.severity}] (${wp.field}) ${wp.reason} — fix: ${wp.fix}${wp.source?.url ? ` — [source](${wp.source.url})` : ''}`)
     .join('\n');
   const util = data.tagUtilization || {};
   const utilNotes = [
@@ -9,13 +9,16 @@ export function formatAnalyzeResult(data) {
     util.overLong?.length ? `over 20 chars: ${util.overLong.join(', ')}` : '',
     util.tooBroad?.length ? `single-word (too broad): ${util.tooBroad.join(', ')}` : '',
   ].filter(Boolean).join(' · ');
+  const score = data.overallScore ?? data.seoScore ?? 'n/a';
+  const limitations = (data.limitations || []).map((item) => `- ${item}`).join('\n');
 
   return (
-    `# Listing Audit\n\n` +
-    `**SEO Score: ${data.seoScore}/100** — title ${s.title}, tags ${s.tags}, description ${s.description}, completeness ${s.completeness}\n\n` +
+    `# Listing Readiness\n\n` +
+    `**Listing Readiness: ${score}/100**${data.scoringVersion ? ` · rubric ${data.scoringVersion}` : ''} — title ${s.title}, tags ${s.tags}, description ${s.description}, completeness ${s.completeness}\n\n` +
     `## Weak points\n${weakPoints || 'None — this listing passes every check.'}\n\n` +
     `## Missing keywords\n${(data.missingKeywords || []).join(', ') || 'none'}\n\n` +
-    `## Tag slots\n${util.used}/${util.max} used${utilNotes ? ` (${utilNotes})` : ''}`
+    `## Tag slots\n${util.used}/${util.max} used${utilNotes ? ` (${utilNotes})` : ''}` +
+    `${limitations ? `\n\n## Limitations\n${limitations}` : ''}`
   );
 }
 
@@ -29,10 +32,12 @@ export function formatOptimizeResult(data) {
   const modeNote = data.mode && data.mode !== 'full'
     ? ` · only the ${data.mode.replace('_only', '')} was rewritten`
     : '';
+  const beforeScore = before.overallScore ?? before.seoScore ?? 'n/a';
+  const afterScore = after.overallScore ?? after.seoScore ?? 'n/a';
 
   return (
-    `# Optimized Listing\n\n` +
-    `**SEO Score: ${before.seoScore} → ${after.seoScore}** · resolved ${data.resolved?.length ?? 0} finding(s)` +
+    `# Guided Listing Fix\n\n` +
+    `**Listing Readiness: ${beforeScore} → ${afterScore}** · resolved ${data.resolved?.length ?? 0} finding(s)` +
     `${data.unresolved?.length ? `, still open: ${data.unresolved.join(', ')}` : ''}${modeNote}${fallbackNote}\n\n` +
     `## Title\n${optimized.title}\n\n` +
     `## Description\n${optimized.description}\n\n` +
@@ -50,4 +55,3 @@ export function formatKeywordsResult(data) {
     `${rows || 'No suggestions found for this seed.'}`
   );
 }
-
