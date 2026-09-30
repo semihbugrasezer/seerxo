@@ -185,7 +185,9 @@ describe('formatters', () => {
     assert.ok(text.includes('Listing Readiness'));
     assert.ok(!text.includes('SEO Score'));
     assert.ok(text.includes('etsy-guidance-2026-04-27'));
-    assert.ok(text.includes('https://www.etsy.com/seller-handbook/article/382774281517'));
+    const sourceUrl = text.match(/\[source\]\((?<url>[^)]+)\)/)?.groups?.url;
+    assert.equal(sourceUrl, audit.weakPoints[0].source.url);
+    assert.equal(new URL(sourceUrl).hostname, 'www.etsy.com');
     assert.ok(text.includes('does not predict search rank'));
     assert.ok(text.includes('[high] (tags) Exactly 13 tags — fix: Use all 13 tag slots.'));
     assert.ok(text.includes('12oz'));
