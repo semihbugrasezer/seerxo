@@ -1,35 +1,26 @@
 [[PackageOverrides]]
 name = "undici"
-version = "6.27.0"
+version = "6.28.0"
 ecosystem = "npm"
 group = "dev"
 vulnerability.ignore = true
-effectiveUntil = 2026-08-31
-reason = "Bundled inside npm 11.18.0 via node-gyp release tooling; not shipped in the seerxo package runtime."
+effectiveUntil = 2026-10-31
+reason = "Bundled inside npm 11.20.0 via node-gyp release tooling; not shipped in the seerxo package runtime."
 
 [[PackageOverrides]]
 name = "ip-address"
-version = "10.2.0"
+version = "10.5.0"
 ecosystem = "npm"
 group = "dev"
 vulnerability.ignore = true
-effectiveUntil = 2026-08-31
-reason = "Bundled inside npm 11.18.0 (socks-proxy-agent) release tooling; not shipped in the seerxo package runtime."
+effectiveUntil = 2026-10-31
+reason = "Bundled inside npm 11.20.0 (socks-proxy-agent) release tooling; not shipped in the seerxo package runtime."
 
 [[PackageOverrides]]
 name = "brace-expansion"
-version = "5.0.7"
+version = "5.0.9"
 ecosystem = "npm"
 group = "dev"
 vulnerability.ignore = true
-effectiveUntil = 2026-08-31
-reason = "Bundled inside npm 11.18.0 via release tooling; not shipped in the seerxo package runtime."
-
-[[PackageOverrides]]
-name = "tar"
-version = "7.5.19"
-ecosystem = "npm"
-group = "dev"
-vulnerability.ignore = true
-effectiveUntil = 2026-08-31
-reason = "Bundled inside npm 11.18.0 via release tooling; not shipped in the seerxo package runtime."
+effectiveUntil = 2026-10-31
+reason = "Bundled inside npm 11.20.0 via release tooling; not shipped in the seerxo package runtime."
