@@ -1,0 +1,21 @@
+osv-scanner.toml
+  s_4fc92d56065632::t_6298a7284e8b18 27-53
+package-lock.json
+  s_4fc92d56065632::t_658b7fc939886c 1656-1658,1662
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6d7fc4c7c52ccb34f5a72e4b541e08fa7ddc0332",
+  "prompts": {},
+  "sessions": {
+    "s_4fc92d56065632": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cef7c325-f6d6-4c48-9a17-d5fc8dc50414",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Semih Buğra Sezer <semih.b.sezer@gmail.com>"
+    }
+  }
+}
