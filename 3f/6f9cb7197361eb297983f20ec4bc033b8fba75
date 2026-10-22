@@ -1,0 +1,21 @@
+package-lock.json
+  s_4fc92d56065632::t_5e4c795ab6fb53 2416-2418,2497-2498,2522-2524,2526,2631,2679,3024,3229,3316,3398,3403,3417,3423,3440,3445,3465,3470,3953,4271
+package.json
+  s_4fc92d56065632::t_db0ebffe7d0fc6 75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3f6f9cb7197361eb297983f20ec4bc033b8fba75",
+  "prompts": {},
+  "sessions": {
+    "s_4fc92d56065632": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cef7c325-f6d6-4c48-9a17-d5fc8dc50414",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Semih Buğra Sezer <semih.b.sezer@gmail.com>"
+    }
+  }
+}
