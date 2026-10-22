@@ -72,7 +72,7 @@
   },
   "overrides": {
     "ip-address": "10.7.1",
-    "npm": "11.20.0",
+    "npm": "11.21.1",
     "@actions/http-client": {
       "undici": "^6.28.1"
     },
