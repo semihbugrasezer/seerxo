@@ -1,49 +1,4 @@
 [[PackageOverrides]]
-name = "undici"
-version = "6.28.0"
-ecosystem = "npm"
-group = "dev"
-vulnerability.ignore = true
-effectiveUntil = 2026-10-31
-reason = "Bundled inside npm 11.20.0 via node-gyp release tooling; not shipped in the seerxo package runtime."
-
-[[PackageOverrides]]
-name = "ip-address"
-version = "10.5.0"
-ecosystem = "npm"
-group = "dev"
-vulnerability.ignore = true
-effectiveUntil = 2026-10-31
-reason = "Bundled inside npm 11.20.0 (socks-proxy-agent) release tooling; not shipped in the seerxo package runtime."
-
-[[PackageOverrides]]
-name = "brace-expansion"
-version = "5.0.9"
-ecosystem = "npm"
-group = "dev"
-vulnerability.ignore = true
-effectiveUntil = 2026-10-31
-reason = "Bundled inside npm 11.20.0 via release tooling; not shipped in the seerxo package runtime."
-
-[[PackageOverrides]]
-name = "http-cache-semantics"
-version = "4.2.0"
-ecosystem = "npm"
-group = "dev"
-vulnerability.ignore = true
-effectiveUntil = 2026-11-30
-reason = "Bundled inside npm 11.20.0 (make-fetch-happen) release tooling; not shipped in the seerxo package runtime."
-
-[[PackageOverrides]]
-name = "postcss-selector-parser"
-version = "7.1.4"
-ecosystem = "npm"
-group = "dev"
-vulnerability.ignore = true
-effectiveUntil = 2026-11-30
-reason = "Bundled inside npm 11.20.0 (@npmcli/query) release tooling; not shipped in the seerxo package runtime."
-
-[[PackageOverrides]]
 name = "braces"
 version = "3.0.3"
 ecosystem = "npm"
