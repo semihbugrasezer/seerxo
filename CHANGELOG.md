@@ -1,3 +1,11 @@
+## [1.13.1](https://github.com/semihbugrasezer/seerxo/compare/v1.13.0...v1.13.1) (2026-11-03)
+
+
+### Bug Fixes
+
+* **deps:** patch remaining development vulnerabilities ([86a2a9b](https://github.com/semihbugrasezer/seerxo/commit/86a2a9b1c890868407653425e7216b94a2f35801))
+* **deps:** update js-yaml to 4.3.2 ([2512d6f](https://github.com/semihbugrasezer/seerxo/commit/2512d6f666621333b290cd0b5a222a673dbdd2b9))
+
 # [1.13.0](https://github.com/semihbugrasezer/seerxo/compare/v1.12.7...v1.13.0) (2026-07-26)
 
 
