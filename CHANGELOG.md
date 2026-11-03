@@ -1,3 +1,10 @@
+## [1.13.2](https://github.com/semihbugrasezer/seerxo/compare/v1.13.1...v1.13.2) (2026-11-03)
+
+
+### Bug Fixes
+
+* **release:** publish via npm trusted publishing (OIDC) ([#157](https://github.com/semihbugrasezer/seerxo/issues/157)) ([e2d7b73](https://github.com/semihbugrasezer/seerxo/commit/e2d7b73c60f803946495c97d89921cbfdb8ac256)), closes [#156](https://github.com/semihbugrasezer/seerxo/issues/156)
+
 ## [1.13.1](https://github.com/semihbugrasezer/seerxo/compare/v1.13.0...v1.13.1) (2026-11-03)
 
 
