@@ -8,6 +8,10 @@ updates:
     labels:
       - dependencies
       - security
+    ignore:
+      # esmock 3 needs module.registerHooks (Node >=22.15); we still support Node 18/20.
+      - dependency-name: esmock
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
