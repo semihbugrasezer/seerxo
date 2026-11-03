@@ -1,0 +1,19 @@
+osv-scanner.toml
+  s_a889822f2607e0::t_9d7d9a2020c134 18-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "25513d44e4b38f8a0fced3e5912c56668356ca44",
+  "prompts": {},
+  "sessions": {
+    "s_a889822f2607e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6ba401a3-d262-45a9-8075-7be1aaa3d23a",
+        "model": "unknown"
+      },
+      "human_author": "Semih Buğra Sezer <semih.b.sezer@gmail.com>"
+    }
+  }
+}
