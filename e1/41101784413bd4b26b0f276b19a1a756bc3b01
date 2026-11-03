@@ -1,0 +1,19 @@
+.github/workflows/release.yml
+  s_a889822f2607e0::t_65977ebe945444 47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e141101784413bd4b26b0f276b19a1a756bc3b01",
+  "prompts": {},
+  "sessions": {
+    "s_a889822f2607e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6ba401a3-d262-45a9-8075-7be1aaa3d23a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Semih Buğra Sezer <semih.b.sezer@gmail.com>"
+    }
+  }
+}
