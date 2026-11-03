@@ -15,3 +15,12 @@ group = "dev"
 vulnerability.ignore = true
 effectiveUntil = 2026-12-31
 reason = "Dev-only, bundled inside npm@11.21.1 (node-gyp) used by semantic-release at release time; bundled deps cannot be overridden. Drop when npm 11.x ships undici >=6.29.1."
+
+[[PackageOverrides]]
+name = "minimatch"
+version = "10.2.5"
+ecosystem = "npm"
+group = "dev"
+vulnerability.ignore = true
+effectiveUntil = 2026-12-31
+reason = "Dev-only, bundled inside npm@11.21.1 used by semantic-release; bundled deps cannot be overridden (GHSA-g3hv-75wg-m249)."
