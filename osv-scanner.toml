@@ -6,3 +6,12 @@ group = "dev"
 vulnerability.ignore = true
 effectiveUntil = 2026-11-30
 reason = "Dev-only via semantic-release micromatch; no fixed release exists yet and patterns are not user-controlled."
+
+[[PackageOverrides]]
+name = "undici"
+version = "6.29.0"
+ecosystem = "npm"
+group = "dev"
+vulnerability.ignore = true
+effectiveUntil = 2026-12-31
+reason = "Dev-only, bundled inside npm@11.21.1 (node-gyp) used by semantic-release at release time; bundled deps cannot be overridden. Drop when npm 11.x ships undici >=6.29.1."
