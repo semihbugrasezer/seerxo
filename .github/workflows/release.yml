@@ -44,7 +44,7 @@ jobs:
         id: release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # npm auth: OIDC trusted publishing (id-token: write); no NPM_TOKEN.
         # semantic-release bumps package.json in the working tree when it
         # releases; comparing before/after tells us whether one happened.
         run: |
