@@ -8,6 +8,7 @@
 [![npm downloads](https://img.shields.io/npm/dw/seerxo?logo=npm)](https://www.npmjs.com/package/seerxo)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-blue)](https://modelcontextprotocol.io)
 [![LightNow MCP capabilities](https://lightnow.ai/badge/io.github.semihbugrasezer/seerxo)](https://lightnow.ai/servers/io.github.semihbugrasezer/seerxo)
+[![Seerxo MCP Market Safety Grade](https://mcp.market/badge/semihbugrasezer-seerxo.svg)](https://mcp.market/server/semihbugrasezer-seerxo)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub stars](https://img.shields.io/github/stars/semihbugrasezer/seerxo?style=social)](https://github.com/semihbugrasezer/seerxo)
 
