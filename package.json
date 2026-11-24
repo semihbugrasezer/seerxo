@@ -68,7 +68,7 @@
     "@semantic-release/npm": "^13.1.5",
     "@semantic-release/release-notes-generator": "^14.1.0",
     "esmock": "^2.7.6",
-    "semantic-release": "^25.0.3"
+    "semantic-release": "^26.0.1"
   },
   "overrides": {
     "ip-address": "10.7.1",
